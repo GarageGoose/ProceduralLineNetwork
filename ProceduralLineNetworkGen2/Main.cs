@@ -3,14 +3,17 @@ using System;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
+    //EquiangularPoints means lines will have predetermined angle based on the max line per point (ex, if MaxLinesPerPoint = 4, every line will be 90 deg apart)
+    //Very limited in functionality but is significanltly more performant
     partial class EquiangularLineNetwork
     {
 
     }
+
+    //Lines can have any angles regardless of amount on points
+    //Worse in performance but is significanltly more customizable
     partial class DynamicLineNetwork
     {
-        //EquiangularPoints means lines will have predetermined angle based on the max line per point (ex, if MaxLinesPerPoint = 4, every line will be 90 deg apart)
-        //MaxPointsPerLine will apply to every point on the line network. Cannot be changed once the line network is created (if equiangular points is true)
         public DynamicLineNetwork(int Seed)
         {
 
@@ -62,10 +65,11 @@ namespace GarageGoose.ProceduralLineNetwork
         {
             //Initiation
             private int LineLength;
-            private string? PointID;
+            private string[]? PointID;
 
             //Exception
-            private string[] NewLinesOnID;
+            private string[] NewLinesOnPointThatHasAnySpecifiedID;
+            private string[] NewLinesOnPointThatHasAllSpecifiedID;
             private float MinAngleBetweenLines;
             private float MaxAngleBetweenLines;
             private int MaxAreaDensity;
@@ -81,6 +85,7 @@ namespace GarageGoose.ProceduralLineNetwork
 
 
             //Required
+            //Sets the length of the line
             public ExpandOnPoint SetLineLength(int LineLength)
             {
                 this.LineLength = LineLength;
@@ -88,21 +93,29 @@ namespace GarageGoose.ProceduralLineNetwork
             }
 
             //Optional
-            public ExpandOnPoint SetPointID(string PointID)
+            //Set custom point identifier(s). Used on SetNewLinesOnID.
+            public ExpandOnPoint SetPointID(string[] PointID)
             {
                 this.PointID = PointID;
                 return this;
             }
 
             //Optional
-            public ExpandOnPoint SetNewLinesOnID(string[] NewLinesOnID)
+            //Spawn new lines on point that has any or all specified ID(s)
+            public ExpandOnPoint NewLinesOnID(string[] NewLinesOnID, bool MustIncludeAll)
             {
-                this.NewLinesOnID = NewLinesOnID;
+                if (MustIncludeAll)
+                {
+                    NewLinesOnPointThatHasAllSpecifiedID = NewLinesOnID;
+                    return this;
+                }
+                NewLinesOnPointThatHasAnySpecifiedID = NewLinesOnID;
                 return this;
             }
 
             //Optional
-            public ExpandOnPoint SetAngleLimitBetweenLines(float Min, float Max)
+            //Spawn only on points that has the required min and max angles between lines
+            public ExpandOnPoint SpawnOnPointsThatHasSpecifiedAngle(float Min, float Max)
             {
                 MinAngleBetweenLines = Min;
                 MaxAngleBetweenLines = Max;
@@ -110,7 +123,8 @@ namespace GarageGoose.ProceduralLineNetwork
             }
 
             //Optional
-            public ExpandOnPoint SetAreaDensityLimit(int Min, int Max)
+            //Spawn only on points that falls within the specified area density
+            public ExpandOnPoint AreaDensityLimit(int Min, int Max)
             {
                 MinAreaDensity = Min;
                 MaxAreaDensity = Max;
@@ -118,7 +132,8 @@ namespace GarageGoose.ProceduralLineNetwork
             }
 
             //Optional
-            public ExpandOnPoint SetLineCapPerPoint(int Min, int Max)
+            //Spawn only on points that has the required min and max amount of lines
+            public ExpandOnPoint SpawnOnPointsThatOnlyHasSpecifiedAmountOfLines(int Min, int Max)
             {
                 MinLinesAtPoint = Min;
                 MaxLinesAtPoint = Max;
@@ -126,6 +141,7 @@ namespace GarageGoose.ProceduralLineNetwork
             }
 
             //Optional
+            //The end of the line will connect to the nearest point that is within the radius as oppose to adding another point near that point
             public ExpandOnPoint SetSnapToPointRadius(float SnapToPointRadius)
             {
                 this.SnapToPointRadius = SnapToPointRadius;
@@ -133,6 +149,8 @@ namespace GarageGoose.ProceduralLineNetwork
             }
 
             //Optional
+            //Line will stop at collision and make an intersection between this line and the colliding line
+            //Overrides SetSnapToPointRadius
             public ExpandOnPoint SetSnapToNearestCollision(bool SnapToNearestCollision)
             {
                 this.SnapToNearestCollision = SnapToNearestCollision;
@@ -140,22 +158,35 @@ namespace GarageGoose.ProceduralLineNetwork
             }
 
             //Optional
+            //Sets specific angular distance to the anchored line (chosen at random but depends on when SetAngleLimitBetweenLines is actice)
+            //Overrides SetMinAngularDistToNearestLine
             public ExpandOnPoint SetAngularDistToAnchorLine(float AngularDistToAnchorLine)
             {
                 this.AngularDistToAnchorLine = AngularDistToAnchorLine;
                 return this;
             }
-            
+
             //Optional
+            //Prevents line from spawning too close in angular distance to the nearest line
             public ExpandOnPoint SetMinAngularDistToNearestLine(float MinAngularDistToNearestLine)
             {
                 this.MinAngularDistToNearestLine = MinAngularDistToNearestLine;
                 return this;
             }
+
+            //Initiates expansion
             public ExpandOnPoint Expand(int Iterations)
             {
                 return this;
             }
         }
     }
+
+    public class MergeLineNetworks
+    {
+
+    }
+
 }
+
+

@@ -7,7 +7,7 @@ public class Element
     {
         public Vector2 Location;
 
-        public string? ID;
+        public string[]? ID;
         public float? MinAngle = MathF.PI * 2;
         public float? MaxAngle = MathF.PI * 2;
 
@@ -15,7 +15,7 @@ public class Element
         //TValue = Key of the line
         public SortedList<float, int> ConnectedLines = new();
         
-        public Point(Vector2 Location, string? ID = null)
+        public Point(Vector2 Location, string[]? ID = null)
         {
             this.Location = Location;
             this.ID = ID;
