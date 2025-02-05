@@ -31,7 +31,7 @@ public class NetworkManager
             {
                 if (Min)
                 {
-                    MaxAngularDistanceAtPoint = null;
+                    MinAngularDistanceAtPoint = null;
                 }
                 if (Max)
                 {
@@ -146,7 +146,7 @@ public class NetworkManager
                     float OldMinAngle = DB.Points[PointKey].MinAngle.GetValueOrDefault();
 
                     //Worst case scenario for a min angle
-                    float NewMinAngle = 100000;
+                    float NewMinAngle = MathF.PI * 2;
 
                     //Find the new (if any) min angle
                     if (DB.Points[PointKey].ConnectedLines.Count == 1)
@@ -244,6 +244,8 @@ public class NetworkManager
                     }
                 }
             }
+
+
         }
     }
 }
