@@ -1,7 +1,5 @@
-﻿using System;
-using System.Diagnostics;
-using System.Numerics;
-using System.Xml.Linq;
+﻿using System.Numerics;
+using System;
 
 public class NetworkManager
 {
@@ -12,7 +10,7 @@ public class NetworkManager
             public OrderedDictionary<int, Element.Point> Points = new();
             public OrderedDictionary<int, Element.Line> Lines = new();
 
-            //Trackers for different stuff on points, used when searching for eligible points based on elimination parameters
+            //Trackers for different stuff on points, used when primarily searching for eligible points based on elimination parameters
             public SortedDictionary<float, HashSet<int>>? MaxAngularDistanceAtPoint = new();
             public SortedDictionary<float, HashSet<int>>? MinAngularDistanceAtPoint = new();
             public SortedDictionary<int, HashSet<int>>? LineCountAtPoint = new();
@@ -62,14 +60,22 @@ public class NetworkManager
             public ElementsDatabaseHandler(ElementsDatabase Database)
             {
                 DB = Database;
-                DB.MaxAngularDistanceAtPoint.Add(MathF.PI * 2, new());
-                DB.MinAngularDistanceAtPoint.Add(MathF.PI * 2, new());
-                DB.LineCountAtPoint.Add(0, new());
+                if(DB.MaxAngularDistanceAtPoint != null)
+                {
+                    DB.MaxAngularDistanceAtPoint.Add(MathF.PI * 2, new());
+                }
+                if (DB.MinAngularDistanceAtPoint != null)
+                {
+                    DB.MinAngularDistanceAtPoint.Add(MathF.PI * 2, new());
+                }
+                if(DB.LineCountAtPoint != null)
+                {
+                    DB.LineCountAtPoint.Add(0, new());
+                }
             }
 
             public void AddLine(int ConnectingPointKeyA, int ConnectingPointKeyB, float AngleAtLineA, float AngleAtLineB)
             {
-                //Assignes the unique key for the new element (line), used for referencing this line
                 int LineKey = DB.NewUniqueElementKey();
 
                 DB.Lines.Add(DB.NewUniqueElementKey(), new(ConnectingPointKeyA, ConnectingPointKeyB));
@@ -80,17 +86,15 @@ public class NetworkManager
             }
             private void UpdatePointAddLine(int PointKey, int LineID, float Angle)
             {
-                //Updates the connected lines list inside the connecting point.
                 DB.Points[PointKey].AddLine(LineID, Angle);
 
-                //Updates MaxAngularDistanceAtPoint tracker, checks first if database is active
+                //Updates MaxAngularDistanceAtPoint tracker
                 if (DB.MaxAngularDistanceAtPoint != null)
                 {
                     //Gets the assigned max angle of the point before finding the new one,
                     //used when updating the point value since it needs to remove the old value from the database before adding the updated value
                     float OldMaxAngle = DB.Points[PointKey].MaxAngle.GetValueOrDefault();
 
-                    //Worst case scenario for a max angle
                     float NewMaxAngle = 0;
 
                     //Find the new (if any) max angle
@@ -138,7 +142,7 @@ public class NetworkManager
                     }
                 }
 
-                //Updates MinAngularDistanceAtPoint tracker, checks first if database is active
+                //Updates MinAngularDistanceAtPoint tracker
                 if (DB.MinAngularDistanceAtPoint != null)
                 {
                     //Gets the assigned min angle of the point before finding the new one,
@@ -193,11 +197,10 @@ public class NetworkManager
                     }
                 }
 
-                //Updates LineCountAtPoint tracker, checks first if database is active
+                //Updates LineCountAtPoint tracker
                 //Assumes that the new line is added before before reaching this
                 if (DB.LineCountAtPoint != null)
                 {
-                    
                     //Removes outdated information to the database
                     DB.LineCountAtPoint[DB.Points[PointKey].ConnectedLines.Count - 1].Remove(PointKey);
 
@@ -244,8 +247,6 @@ public class NetworkManager
                     }
                 }
             }
-
-
         }
     }
 }
