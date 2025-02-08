@@ -15,10 +15,7 @@ namespace GarageGoose.ProceduralLineNetwork
         /// These trackers significanly slow down adding new elements but is permanent when turned off.
         /// Parameters relying on these parameters will obvoiusly stop working when turned off (it wont crash tho)
         /// </summary>
-        public void StopTracking(bool MaxAnglePerPoint, bool MinAnglePerPoint, bool NumberOfLinesOnPoint, bool PointID)
-        {
 
-        }
 
         /// <summary>
         /// Find eligible point keys based on the parameters

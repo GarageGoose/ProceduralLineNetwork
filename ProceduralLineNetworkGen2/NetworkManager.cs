@@ -1,24 +1,45 @@
 ﻿using System.Numerics;
-using System;
-using GarageGoose.ProceduralLineNetwork;
-using System.Security.Cryptography.X509Certificates;
+using System.Reflection.PortableExecutable;
 
 public class ElementsManager
 {
     public class ElementsDatabase
     {
-        public OrderedDictionary<int, Element.Point> Points = new();
-        public OrderedDictionary<int, Element.Line> Lines = new();
+        public OrderedDictionary<uint, Element.Point> Points = new();
+        public OrderedDictionary<uint, Element.Line> Lines = new();
 
         //Trackers for different stuff on points, used when primarily searching for eligible points based on elimination parameters
-        public SortedDictionary<float, HashSet<int>>? MaxAngularDistanceAtPoint = new();
-        public SortedDictionary<float, HashSet<int>>? MinAngularDistanceAtPoint = new(Comparer<float>.Create((a, b) => b.CompareTo(a)));
-        public SortedDictionary<int, HashSet<int>>? LineCountAtPoint = new();
-        public SortedDictionary<int, HashSet<int>>? PointDensity = new();
-        public SortedDictionary<string, HashSet<int>>? PointID = new();
+        public class UintHashSetWithVal(float val)
+        {
+            public float Val = val;
+            public HashSet<uint> PointKey = new();
+        }
 
-        private int CurrUniqueElementKey = 0;
-        public int NewUniqueElementKey()
+        public SortedSet<UintHashSetWithVal>? MaxAngularDistanceAtPoint = new(Comparer<UintHashSetWithVal>.Create((a, b) => a.Val.CompareTo(b.Val)));
+        public bool MaxADPGetRef(float Angle, out UintHashSetWithVal Ref)
+        {
+            if (MaxAngularDistanceAtPoint != null && MaxAngularDistanceAtPoint.TryGetValue(new(Angle), out Ref))
+            {
+                return true;
+            }
+            Ref = new(0);
+            return false;
+        }
+        public SortedSet<UintHashSetWithVal>? MinAngularDistanceAtPoint = new(Comparer<UintHashSetWithVal>.Create((a, b) => b.Val.CompareTo(a.Val)));
+        public bool MinADPGetRef(float Angle, out UintHashSetWithVal Ref)
+        {
+            if (MinAngularDistanceAtPoint != null && MinAngularDistanceAtPoint.TryGetValue(new(Angle), out Ref))
+            {
+                return true;
+            }
+            Ref = new(0);
+            return false;
+        }
+        public SortedDictionary<int, HashSet<uint>>? LineCountAtPoint = new();
+        public SortedDictionary<string, HashSet<uint>>? PointID = new();
+
+        private uint CurrUniqueElementKey = 0;
+        public uint NewUniqueElementKey()
         {
             CurrUniqueElementKey++;
             return CurrUniqueElementKey;
@@ -43,11 +64,6 @@ public class ElementsManager
             LineCountAtPoint = null;
             return this;
         }
-        public ElementsDatabase StopTrackingPointDensity()
-        {
-            PointDensity = null;
-            return this;
-        }
         public ElementsDatabase StopTrackingPointID()
         {
             PointID = null;
@@ -63,11 +79,11 @@ public class ElementsManager
             DB = Database;
             if (DB.MaxAngularDistanceAtPoint != null)
             {
-                DB.MaxAngularDistanceAtPoint.Add(MathF.PI * 2, new());
+                DB.MaxAngularDistanceAtPoint.Add(new(MathF.PI * 2));
             }
             if (DB.MinAngularDistanceAtPoint != null)
             {
-                DB.MinAngularDistanceAtPoint.Add(MathF.PI * 2, new());
+                DB.MinAngularDistanceAtPoint.Add(new(MathF.PI * 2));
             }
             if (DB.LineCountAtPoint != null)
             {
@@ -75,9 +91,9 @@ public class ElementsManager
             }
         }
 
-        public void AddLine(int ConnectingPointKeyA, int ConnectingPointKeyB, float AngleAtLineA, float AngleAtLineB)
+        public void AddLine(uint ConnectingPointKeyA, uint ConnectingPointKeyB, float AngleAtLineA, float AngleAtLineB)
         {
-            int LineKey = DB.NewUniqueElementKey();
+            uint LineKey = DB.NewUniqueElementKey();
 
             DB.Lines.Add(DB.NewUniqueElementKey(), new(ConnectingPointKeyA, ConnectingPointKeyB));
 
@@ -85,9 +101,9 @@ public class ElementsManager
             UpdatePointAddLine(ConnectingPointKeyA, LineKey, AngleAtLineA);
             UpdatePointAddLine(ConnectingPointKeyB, LineKey, (AngleAtLineB < MathF.PI) ? AngleAtLineB + MathF.PI : AngleAtLineB - MathF.PI);
         }
-        private void UpdatePointAddLine(int PointKey, int LineID, float Angle)
+        private void UpdatePointAddLine(uint PointKey, uint LineKey, float Angle)
         {
-            DB.Points[PointKey].AddLine(LineID, Angle);
+            DB.Points[PointKey].AddLine(LineKey, Angle);
 
             //Updates MaxAngularDistanceAtPoint tracker
             if (DB.MaxAngularDistanceAtPoint != null)
@@ -126,17 +142,23 @@ public class ElementsManager
                 if (OldMaxAngle != NewMaxAngle)
                 {
                     //Removes the outdated info on the database
-                    DB.MaxAngularDistanceAtPoint[OldMaxAngle].Remove(PointKey);
+                    if(DB.MaxADPGetRef(OldMaxAngle, out var MADP_RefOld))
+                    {
+                        MADP_RefOld.PointKey.Remove(PointKey);
+                    }
 
                     //Adds the updated info to the database
                     //Checks if the particular value already exists in the database and if not, it adds it
-                    if (DB.MaxAngularDistanceAtPoint.ContainsKey(NewMaxAngle))
+                    if (DB.MaxADPGetRef(NewMaxAngle, out var MADP_RefNew))
                     {
-                        DB.MaxAngularDistanceAtPoint.Add(NewMaxAngle, new());
+                        MADP_RefNew.PointKey.Add(PointKey);
                     }
-
-                    //Adds the PointKey to that value
-                    DB.MaxAngularDistanceAtPoint[NewMaxAngle].Add(PointKey);
+                    else
+                    {
+                        ElementsDatabase.UintHashSetWithVal New = new(NewMaxAngle);
+                        New.PointKey.Add(PointKey);
+                        DB.MaxAngularDistanceAtPoint.Add(New);
+                    }
 
                     //Updates the stored info on the point
                     DB.Points[PointKey].MaxAngle = NewMaxAngle;
@@ -181,17 +203,23 @@ public class ElementsManager
                 if (OldMinAngle != NewMinAngle)
                 {
                     //Removes the outdated info on the database
-                    DB.MinAngularDistanceAtPoint[OldMinAngle].Remove(PointKey);
+                    if (DB.MinADPGetRef(OldMinAngle, out var MADP_RefOld))
+                    {
+                        MADP_RefOld.PointKey.Remove(PointKey);
+                    }
 
                     //Adds the updated info to the database
                     //Checks if the particular value already exists in the database and if not, it adds it
-                    if (DB.MinAngularDistanceAtPoint.ContainsKey(NewMinAngle))
+                    if (DB.MinADPGetRef(NewMinAngle, out var MADP_RefNew))
                     {
-                        DB.MinAngularDistanceAtPoint.Add(NewMinAngle, new());
+                        MADP_RefNew.PointKey.Add(PointKey);
                     }
-
-                    //Adds the PointKey to that value
-                    DB.MinAngularDistanceAtPoint[NewMinAngle].Add(PointKey);
+                    else
+                    {
+                        ElementsDatabase.UintHashSetWithVal New = new(NewMinAngle);
+                        New.PointKey.Add(PointKey);
+                        DB.MinAngularDistanceAtPoint.Add(New);
+                    }
 
                     //Updates the stored info on the point
                     DB.Points[PointKey].MinAngle = NewMinAngle;
@@ -218,18 +246,18 @@ public class ElementsManager
         public void AddPoint(Vector2 Location, string[]? ID = null)
         {
             //Assignes the unique key for the new element (point), used for referencing this line
-            int PointKey = DB.NewUniqueElementKey();
+            uint PointKey = DB.NewUniqueElementKey();
 
             DB.Points.Add(PointKey, new(Location, ID));
 
             //Add relevant values to any active trackers
-            if (DB.MaxAngularDistanceAtPoint != null)
+            if (DB.MaxAngularDistanceAtPoint != null && DB.MaxADPGetRef(MathF.PI * 2, out var MaxADP))
             {
-                DB.MaxAngularDistanceAtPoint[MathF.PI * 2].Add(PointKey);
+                MaxADP.PointKey.Add(PointKey);
             }
-            if (DB.MinAngularDistanceAtPoint != null)
+            if (DB.MinAngularDistanceAtPoint != null && DB.MinADPGetRef(MathF.PI * 2, out var MinADP))
             {
-                DB.MinAngularDistanceAtPoint[MathF.PI * 2].Add(PointKey);
+                MinADP.PointKey.Add(PointKey);
             }
             if (DB.LineCountAtPoint != null)
             {
@@ -247,6 +275,36 @@ public class ElementsManager
                 }
             }
         }
-        
+        public HashSet<uint> GetAllMaxAngularDistanceAtPointInRange(float Min, float Max)
+        {
+            if(DB.MaxAngularDistanceAtPoint == null)
+            {
+                return new();
+            }
+            HashSet<uint> PointKeys = new();
+            foreach(ElementsDatabase.UintHashSetWithVal HashSets in DB.MaxAngularDistanceAtPoint.GetViewBetween(new(Min), new(Max)))
+            {
+                PointKeys.UnionWith(HashSets.PointKey);
+            }
+            return PointKeys;
+        }
+        public HashSet<uint> GetAllMinAngularDistanceAtPointInRange(float Min, float Max)
+        {
+            if (DB.MinAngularDistanceAtPoint == null)
+            {
+                return new();
+            }
+            HashSet<uint> PointKeys = new();
+            foreach (ElementsDatabase.UintHashSetWithVal HashSets in DB.MinAngularDistanceAtPoint.GetViewBetween(new(Min), new(Max)))
+            {
+                PointKeys.UnionWith(HashSets.PointKey);
+            }
+            return PointKeys;
+        }
     }
+}
+
+public class NetworkCompute
+{
+
 }

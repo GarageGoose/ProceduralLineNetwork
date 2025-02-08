@@ -13,7 +13,7 @@ public class Element
 
         //TKey   = Angle of the connected line
         //TValue = Key of the line
-        public SortedList<float, int> ConnectedLines = new();
+        public SortedList<float, uint> ConnectedLines = new();
         
         public Point(Vector2 Location, string[]? ID = null)
         {
@@ -21,7 +21,7 @@ public class Element
             this.ID = ID;
         }
 
-        public void AddLine(int LineKey, float Angle)
+        public void AddLine(uint LineKey, float Angle)
         {
             ConnectedLines.Add(Angle, LineKey);
         }
@@ -29,9 +29,9 @@ public class Element
 
     public class Line
     {
-        public int PointKey1;
-        public int PointKey2;
-        public Line(int PointKey1, int PointKey2)
+        public uint PointKey1;
+        public uint PointKey2;
+        public Line(uint PointKey1, uint PointKey2)
         {
             this.PointKey1 = PointKey1;
             this.PointKey2 = PointKey2;
