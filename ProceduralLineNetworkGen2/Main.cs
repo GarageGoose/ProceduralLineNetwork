@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System;
 
+
 namespace GarageGoose.ProceduralLineNetwork
 {
     partial class LineNetwork
@@ -21,11 +22,10 @@ namespace GarageGoose.ProceduralLineNetwork
 
         /// <summary>
         /// Find eligible point keys based on the parameters
-        /// More efficient to find many point keys at one due to how the finding algorithm work (see NetworkManager.cs)
+        /// More efficient to find many point keys at once due to how the finding algorithm work (see NetworkManager.cs)
         /// </summary>
         /// <param name="Limit">Limits the size of the array</param>
         /// <param name="Params">Set of rules for finding points</param>
-        /// <returns></returns>
         public int[] FindPointKeys(FindPointsParams Params, int Limit)
         {
             return new int[0];
@@ -36,7 +36,7 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Behavior">Set of rules for the behavior</param>
         /// <param name="PointKeysArray">Use multiple points at once</param>
-        /// <param name="PointKey">Use a single point</param>
+        /// <param name="PointKey">Use a single point, ignored if PointKeysArray isnt null</param>
         public void ExpandNetwork(ExpandOnPointBehavior Behavior, int[]? PointKeysArray = null, int? PointKey = null)
         {
 
@@ -50,6 +50,7 @@ namespace GarageGoose.ProceduralLineNetwork
 
     /// <summary>
     /// Parameters for the behavior when expanding a LineNetwork
+    /// Every parameters is optional except for SetLineLength
     /// </summary>
     public class ExpandOnPointBehavior
     {
@@ -63,8 +64,13 @@ namespace GarageGoose.ProceduralLineNetwork
         public bool SnapToNearestCollision;
         public float AngularDistToAnchorLine;
         public float MinAngularDistToNearestLine;
-        public Vector2 LocationAttraction;
-        public float LocationAttractionStrength;
+        public LocationAttraction[] locationAttractions;
+        public class LocationAttraction
+        {
+            public Vector2 Location;
+            public float Radius;
+            public float Strength;
+        }
 
         /// <summary>
         /// Required, sets line length
@@ -86,7 +92,7 @@ namespace GarageGoose.ProceduralLineNetwork
 
         /// <summary>
         /// Make the line face a certain direction.
-        /// It will still follow other behavior as much as possible, dont use other behavior parameters for best effect.
+        /// It will still follow other behavior as much as possible so dont use other behavior parameters for the best effect.
         /// </summary>
         public ExpandOnPointBehavior SetDesiredAngle(float DesiredAngleRadians)
         {
@@ -115,10 +121,12 @@ namespace GarageGoose.ProceduralLineNetwork
         }
 
         /// <summary>
-        /// Sets specific angular distance to the anchored line (chosen at random but depends on when SetAngleLimitBetweenLines is actice)
+        /// Sets specific angular distance to the anchored line
+        /// Chosen at random if SpecificLineIndex is untouched.
         /// Overrides SetMinAngularDistToNearestLine, LocationAttraction, and SetDesiredAngle
         /// </summary>
-        public ExpandOnPointBehavior SetAngularDistToAnchorLine(float AngularDistToAnchorLine)
+        /// <param name="SpecificLineIndex">Get connected line index infos at FEATURE NOT IMPLEMENTED</param>
+        public ExpandOnPointBehavior SetAngularDistToAnchorLine(float AngularDistToAnchorLine, int SpecificLineIndex = -1)
         {
             this.AngularDistToAnchorLine = AngularDistToAnchorLine;
             return this;
@@ -136,16 +144,27 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <summary>
         /// Make the line go towards the location as much as possible given the earlier parameters
         /// </summary>
-        public ExpandOnPointBehavior SetLocationAttraction(Vector2 Location, float LocationAttractionStrength)
+        /// <param name="Strength"></param>
+        public ExpandOnPointBehavior SetLocationAttraction(Vector2[] Location, float[] Radius, float[] Strength)
         {
-            LocationAttraction = Location;
-            this.LocationAttractionStrength = LocationAttractionStrength;
+            if((Location.Length != Radius.Length) || (Strength.Length != Radius.Length))
+            {
+                throw new ArgumentException("Length of each array is not equal");
+            }
+            locationAttractions = new LocationAttraction[Location.Length];
+            for(int i = 0; i < Location.Length; i++)
+            {
+                locationAttractions[i].Location = Location[i];
+                locationAttractions[i].Radius = Radius[i];
+                locationAttractions[i].Strength = Strength[i];
+            }
             return this;
         }
     }
 
     /// <summary>
     /// Parameters for finding relevant points, used in LineNetwork.FindPointKeys
+    /// Everything is optional
     /// </summary>
     public class FindPointsParams
     {
@@ -194,7 +213,7 @@ namespace GarageGoose.ProceduralLineNetwork
 
 
         /// <summary>
-        /// Only include points that has the required min and max angles between lines
+        /// Only include points that has the required min and max angular angles between lines
         /// </summary>
         public FindPointsParams SpawnOnPointsThatHasSpecifiedAngle(float Min, float Max)
         {
@@ -233,8 +252,6 @@ namespace GarageGoose.ProceduralLineNetwork
             MaxLinesAtPoint = Max;
             return this;
         }
-
-
     }
 }
 
