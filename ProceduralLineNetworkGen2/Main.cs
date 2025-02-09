@@ -4,7 +4,7 @@ using System;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
-    partial class LineNetwork
+    public partial class LineNetwork
     {
         public LineNetwork(int Seed)
         {
@@ -23,9 +23,9 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Limit">Limits the size of the array</param>
         /// <param name="Params">Set of rules for finding points</param>
-        public int[] FindPointKeys(FindPointsParams Params, int Limit)
+        public HashSet<int> FindPointKeys(FindPointsParams Params, int Limit)
         {
-            return new int[0];
+            return new();
         }
 
         /// <summary>
@@ -33,8 +33,8 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Behavior">Set of rules for the behavior</param>
         /// <param name="PointKeysArray">Use multiple points at once</param>
-        /// <param name="PointKey">Use a single point, ignored if PointKeysArray isnt null</param>
-        public void ExpandNetwork(ExpandOnPointBehavior Behavior, int[]? PointKeysArray = null, int? PointKey = null)
+        /// <param name="PointKeysHashSet">Use a single point, prioritized if both isnt null</param>
+        public void ExpandNetwork(ExpandOnPointBehavior Behavior, int[]? PointKeysArray = null, HashSet<int>? PointKeysHashSet = null)
         {
 
         }
