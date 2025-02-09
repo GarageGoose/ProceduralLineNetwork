@@ -10,6 +10,7 @@ public class Element
         public string[]? ID;
         public float? MinAngle = MathF.PI * 2;
         public float? MaxAngle = MathF.PI * 2;
+        public uint Key;
 
         //TKey   = Angle of the connected line
         //TValue = Key of the line

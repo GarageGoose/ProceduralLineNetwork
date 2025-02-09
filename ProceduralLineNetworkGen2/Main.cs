@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-using System;
 
 
 namespace GarageGoose.ProceduralLineNetwork
@@ -12,10 +11,13 @@ namespace GarageGoose.ProceduralLineNetwork
         }
 
         /// <summary>
-        /// These trackers significanly slow down adding new elements but is permanent when turned off.
-        /// Parameters relying on these parameters will obvoiusly stop working when turned off (it wont crash tho)
+        /// These trackers significanly slow down the line network overall but is permanent when turned off.
+        /// Parameters relying on these parameters will obviously stop working when turned off (it wont crash tho)
         /// </summary>
+        public void DisableTracker(DisableTracker DT)
+        {
 
+        }
 
         /// <summary>
         /// Find eligible point keys based on the parameters
@@ -32,18 +34,47 @@ namespace GarageGoose.ProceduralLineNetwork
         /// Expand the line network based on the behavior
         /// </summary>
         /// <param name="Behavior">Set of rules for the behavior</param>
-        /// <param name="PointKeysArray">Use multiple points at once</param>
-        /// <param name="PointKeysHashSet">Use a single point, prioritized if both isnt null</param>
+        /// <param name="PointKeysArray">Use multiple PointKeys in an array</param>
+        /// <param name="PointKeysHashSet">Use multiple PointKeys in an hashset, prioritized if both isnt null</param>
         public void ExpandNetwork(ExpandOnPointBehavior Behavior, int[]? PointKeysArray = null, HashSet<int>? PointKeysHashSet = null)
+        {
+
+        }
+
+        /// <summary>
+        /// Manually delete a point, all connected lines going to it will also be deleted.
+        /// PointKey is prioritized when both isnt null
+        /// </summary>
+        /// <param name="Index">Get point by index (sorted by oldest to newest)</param>
+        /// <param name="PointKey">Get point by key</param>
+        public void DeletePoint(int? Index = null, uint? PointKey = null)
+        {
+
+        }
+
+        /// <summary>
+        /// Manually delete a line.
+        /// LineKey is prioritized when both isnt null
+        /// </summary>
+        /// <param name="Index">Get point by index (sorted by oldest to newest)</param>
+        /// <param name="LineKey">Get point by key</param>
+        public void DeleteLine(int? Index = null, uint? LineKey = null)
+        {
+
+        }
+
+        /// <summary>
+        /// Merge two line networks. Selected points on both network will be merged to a single one.
+        /// </summary>
+        /// <param name="MergingLN">Line network to be merged</param>
+        /// <param name="MergeAtThisPointKey">Point to be merged at this line network</param>
+        /// <param name="MergeAtTheMeringLNPointKey">Point to be merged on the merging line network</param>
+        public void MergeLineNetworks(LineNetwork MergingLN, uint MergeAtThisPointKey, uint MergeAtTheMeringLNPointKey)
         {
 
         }
     }
 
-    public class MergeLineNetworks
-    {
-
-    }
 
     /// <summary>
     /// Parameters for the behavior when expanding a LineNetwork
@@ -249,6 +280,43 @@ namespace GarageGoose.ProceduralLineNetwork
             MaxLinesAtPoint = Max;
             return this;
         }
+    }
+
+    /// <summary>
+    /// These trackers significanly slow down the line network overall but is permanent when turned off.
+    /// Parameters relying on these parameters will obviously stop working when turned off (it wont crash tho)
+    /// </summary>
+    public class DisableTracker
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool MaxAngleAtPoint = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool MinAngleAtPoint = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool LineCountAtPoint = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool PointID = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool PointAdditionOrder = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool LineAdditionOrder = false;
     }
 }
 

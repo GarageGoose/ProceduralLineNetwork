@@ -3,8 +3,11 @@ using System.Runtime.InteropServices;
 
 public class ElementsDatabase
 {
-    public OrderedDictionary<uint, Element.Point> Points = new();
-    public OrderedDictionary<uint, Element.Line> Lines = new();
+    public Dictionary<uint, Element.Point> Points = new();
+    public List<uint>? PointKeysList = new();
+
+    public Dictionary<uint, Element.Line> Lines = new();
+    public List<uint>? LineKeysList = new();
 
     //Trackers for different stuff on points, used when primarily searching for eligible points based on elimination parameters
     public struct ValuedPointKeyHashSet
@@ -46,7 +49,7 @@ public class ElementsDatabase
         Ref = new(0);
         return false;
     }
-    public SortedDictionary<string, HashSet<uint>>? PointID = new();
+    public Dictionary<string, HashSet<uint>>? PointID = new();
 
 
     
@@ -55,31 +58,6 @@ public class ElementsDatabase
     {
         CurrUniqueElementKey++;
         return CurrUniqueElementKey;
-    }
-
-
-    //Deletes and stops tracking various stuff, useful when performance is a must but parameters relying on these parameters will obvoiusly stop working when turned off (it wont crash tho)
-    public ElementsDatabase StopTrackingAngularDistanceAtPoint(bool Min, bool Max)
-    {
-        if (Min)
-        {
-            MinAngularDistanceAtPoint = null;
-        }
-        if (Max)
-        {
-            MaxAngularDistanceAtPoint = null;
-        }
-        return this;
-    }
-    public ElementsDatabase StopTrackingLineCountAtPoint()
-    {
-        LineCountAtPoint = null;
-        return this;
-    }
-    public ElementsDatabase StopTrackingPointID()
-    {
-        PointID = null;
-        return this;
     }
 }
 
@@ -319,6 +297,23 @@ public class ElementsDatabaseHandler
         foreach(ElementsDatabase.ValuedPointKeyHashSet HashSets in DB.LineCountAtPoint.GetViewBetween(new(Min), new(Max)))
         {
             PointKeys.UnionWith(HashSets.PointKey);
+        }
+        return PointKeys;
+    }
+    public HashSet<uint> GetAllPointIDAtID(string ID)
+    {
+        if (DB.PointID == null)
+        {
+            return new();
+        }
+        return DB.PointID[ID];
+    }
+    public HashSet<uint> GetPointsInOrderOfAdditionRange(int Min, int Max)
+    {
+        HashSet<uint> PointKeys = new();
+        for(int i = Min; i <= Max; i++)
+        {
+            PointKeys.Add(DB.Points.Keys.ElementAt(i));
         }
         return PointKeys;
     }
