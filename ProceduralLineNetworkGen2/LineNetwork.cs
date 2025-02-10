@@ -1,7 +1,8 @@
 ﻿using System;
 
 
-partial class DynamicLineNetwork
+/*public partial class LineNetwork
 {
-
-}
+    public ElementsDatabase DB = new();
+    public ElementsDatabaseHandler DBHandler;
+}*/

@@ -1,13 +1,13 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
+using GarageGoose.ProceduralLineNetwork.Elements;
 
 public class ElementsDatabase
 {
-    public Dictionary<uint, Element.Point> Points = new();
+    public Dictionary<uint, Point> Points = new();
     public List<uint>? PointKeysList = new();
 
-    public Dictionary<uint, Element.Line> Lines = new();
-    public List<uint>? LineKeysList = new();
+    public Dictionary<uint, Line> Lines = new();
 
     //Trackers for different stuff on points, used when primarily searching for eligible points based on elimination parameters
     public struct ValuedPointKeyHashSet
@@ -81,38 +81,41 @@ public class ElementsDatabaseHandler
     }
     private void UpdatePointAddLine(uint PointKey, uint LineKey, float Angle)
     {
-        DB.Points[PointKey].AddLine(LineKey, Angle);
+        //Use a single reference for the entire operation rather than calling dict each time access is needed
+        Point CurrPointRef = DB.Points[PointKey];
+
+        CurrPointRef.AddLine(LineKey, Angle);
 
         //Updates MaxAngularDistanceAtPoint tracker
         if (DB.MaxAngularDistanceAtPoint != null)
         {
             //Gets the assigned max angle of the point before finding the new one,
             //used when updating the point value since it needs to remove the old value from the database before adding the updated value
-            float OldMaxAngle = DB.Points[PointKey].MaxAngle.GetValueOrDefault();
+            float OldMaxAngle = CurrPointRef.MaxAngle.GetValueOrDefault();
 
             float NewMaxAngle = 0;
 
             //Find the new (if any) max angle
-            if (DB.Points[PointKey].ConnectedLines.Count == 1)
+            if (CurrPointRef.ConnectedLines.Count == 1)
             {
                 //Assumes when theres only one line connected, the max angle is 2pi or 360 deg
                 NewMaxAngle = MathF.PI * 2;
-                DB.Points[PointKey].MaxAngle = NewMaxAngle;
+                CurrPointRef.MaxAngle = NewMaxAngle;
             }
             else
             {
                 //Finds the angle between lines and updates the NewMaxAngle when its larger than NewMaxAngle
                 //Iterates between lines (except the last one, handled differently) and finds the angle between it and the line ahead
-                for (int i = 0; i < DB.Points[PointKey].ConnectedLines.Count - 2; i++)
+                for (int i = 0; i < CurrPointRef.ConnectedLines.Count - 2; i++)
                 {
-                    float CurrMaxAngle = DB.Points[PointKey].ConnectedLines[i + 1] - DB.Points[PointKey].ConnectedLines[i];
+                    float CurrMaxAngle = CurrPointRef.ConnectedLines[i + 1] - CurrPointRef.ConnectedLines[i];
                     NewMaxAngle = (CurrMaxAngle > NewMaxAngle) ? CurrMaxAngle : NewMaxAngle;
                 }
 
                 //Does the same thing but the procedure is different
                 //It compares the first and last line vaule and assumes that the first line is one revolusion ahead
-                float LastPointRads = DB.Points[PointKey].ConnectedLines[DB.Points[PointKey].ConnectedLines.Count - 1];
-                float FirstPointRadsPlusRevolution = DB.Points[PointKey].ConnectedLines[0] + (MathF.PI * 2);
+                float LastPointRads = CurrPointRef.ConnectedLines[CurrPointRef.ConnectedLines.Count - 1];
+                float FirstPointRadsPlusRevolution = CurrPointRef.ConnectedLines[0] + (MathF.PI * 2);
                 float FirstAndLastPointGap = FirstPointRadsPlusRevolution - LastPointRads;
                 NewMaxAngle = (FirstAndLastPointGap > NewMaxAngle) ? FirstAndLastPointGap : NewMaxAngle;
             }
@@ -140,7 +143,7 @@ public class ElementsDatabaseHandler
                 }
 
                 //Updates the stored info on the point
-                DB.Points[PointKey].MaxAngle = NewMaxAngle;
+                CurrPointRef.MaxAngle = NewMaxAngle;
             }
         }
 
@@ -149,32 +152,32 @@ public class ElementsDatabaseHandler
         {
             //Gets the assigned min angle of the point before finding the new one,
             //used when updating the point value since it needs to remove the old value from the database before adding the updated value
-            float OldMinAngle = DB.Points[PointKey].MinAngle.GetValueOrDefault();
+            float OldMinAngle = CurrPointRef.MinAngle.GetValueOrDefault();
 
             //Worst case scenario for a min angle
             float NewMinAngle = MathF.PI * 2;
 
             //Find the new (if any) min angle
-            if (DB.Points[PointKey].ConnectedLines.Count == 1)
+            if (CurrPointRef.ConnectedLines.Count == 1)
             {
                 //Assumes when theres only one line connected, the min angle is 2pi or 360 deg
                 NewMinAngle = MathF.PI * 2;
-                DB.Points[PointKey].MinAngle = NewMinAngle;
+                CurrPointRef.MinAngle = NewMinAngle;
             }
             else
             {
                 //Finds the angle between lines and updates the NewMinAngle when its smaller than NewMinAngle
                 //Iterates between lines (except the last one, handled differently) and finds the angle between it and the line ahead
-                for (int i = 0; i < DB.Points[PointKey].ConnectedLines.Count - 2; i++)
+                for (int i = 0; i < CurrPointRef.ConnectedLines.Count - 2; i++)
                 {
-                    float CurrMinAngle = DB.Points[PointKey].ConnectedLines[i + 1] - DB.Points[PointKey].ConnectedLines[i];
+                    float CurrMinAngle = CurrPointRef.ConnectedLines[i + 1] - CurrPointRef.ConnectedLines[i];
                     NewMinAngle = (CurrMinAngle < NewMinAngle) ? CurrMinAngle : NewMinAngle;
                 }
 
                 //Does the same thing but the procedure is different
                 //It compares the first and last line vaule and assumes that the first line is one revolusion ahead
-                float LastPointRads = DB.Points[PointKey].ConnectedLines[DB.Points[PointKey].ConnectedLines.Count - 1];
-                float FirstPointRadsPlusRevolution = DB.Points[PointKey].ConnectedLines[0] + (MathF.PI * 2);
+                float LastPointRads = DB.Points[PointKey].ConnectedLines[CurrPointRef.ConnectedLines.Count - 1];
+                float FirstPointRadsPlusRevolution = CurrPointRef.ConnectedLines[0] + (MathF.PI * 2);
                 float FirstAndLastPointGap = FirstPointRadsPlusRevolution - LastPointRads;
                 NewMinAngle = (FirstAndLastPointGap < NewMinAngle) ? FirstAndLastPointGap : NewMinAngle;
             }
@@ -202,7 +205,7 @@ public class ElementsDatabaseHandler
                 }
 
                 //Updates the stored info on the point
-                DB.Points[PointKey].MinAngle = NewMinAngle;
+                CurrPointRef.MinAngle = NewMinAngle;
             }
         }
 
@@ -211,19 +214,19 @@ public class ElementsDatabaseHandler
         if (DB.LineCountAtPoint != null)
         {
             //Removes outdated information to the database
-            if(DB.LineCountGetRef(DB.Points[PointKey].ConnectedLines.Count - 1, out var LC_Old))
+            if(DB.LineCountGetRef(CurrPointRef.ConnectedLines.Count - 1, out var LC_Old))
             {
                 LC_Old.PointKey.Remove(PointKey);
             }
 
             //Checks if the particular value already exists in the database and if not, it adds it
-            if (DB.LineCountGetRef(DB.Points[PointKey].ConnectedLines.Count, out var LC_New))
+            if (DB.LineCountGetRef(CurrPointRef.ConnectedLines.Count, out var LC_New))
             {
                 LC_New.PointKey.Add(PointKey);
             }
             else
             {
-                ElementsDatabase.ValuedPointKeyHashSet New = new(DB.Points[PointKey].ConnectedLines.Count);
+                ElementsDatabase.ValuedPointKeyHashSet New = new(CurrPointRef.ConnectedLines.Count);
                 New.PointKey.Add(PointKey);
                 DB.LineCountAtPoint.Add(New);
             }
@@ -311,9 +314,12 @@ public class ElementsDatabaseHandler
     public HashSet<uint> GetPointsInOrderOfAdditionRange(int Min, int Max)
     {
         HashSet<uint> PointKeys = new();
-        for(int i = Min; i <= Max; i++)
+        if (DB.PointKeysList != null)
         {
-            PointKeys.Add(DB.Points.Keys.ElementAt(i));
+            for (int i = Min; i <= Max; i++)
+            {
+                PointKeys.Add(DB.PointKeysList[i]);
+            }
         }
         return PointKeys;
     }
@@ -321,5 +327,9 @@ public class ElementsDatabaseHandler
 
 public class NetworkCompute
 {
-
+    private ElementsDatabase DB;
+    public NetworkCompute(ref ElementsDatabase DBRef)
+    {
+        DB = DBRef;
+    }
 }

@@ -1,22 +1,31 @@
 ﻿using System.Numerics;
 
-
 namespace GarageGoose.ProceduralLineNetwork
 {
-    public partial class LineNetwork
+    public class LineNetwork
     {
-        public LineNetwork(int Seed)
-        {
+        //Handles storage of the line network
+        private ElementsDatabase DB;
 
+        //Handles modifiying and retirieving data from the line network
+        private ElementsDatabaseHandler DBHandle;
+
+        //Handles various computation needed to find points and to expand the network
+        private NetworkCompute Compute;
+
+        public LineNetwork()
+        {
+            DBHandle = new(ref DB);
+            Compute = new(ref DB);
         }
 
         /// <summary>
-        /// These trackers significanly slow down the line network overall but is permanent when turned off.
-        /// Parameters relying on these parameters will obviously stop working when turned off (it wont crash tho)
+        /// These trackers significanly slow down the line network overall. Rebuilding the entire network is needed to turn back those parameters on 
+        /// Parameters relying on these parameters will obviously stop working when turned off (it wont throw an ArgumentException tho)
         /// </summary>
         public void DisableTracker(DisableTracker DT)
         {
-
+            
         }
 
         /// <summary>
@@ -25,7 +34,8 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Limit">Limits the size of the array</param>
         /// <param name="Params">Set of rules for finding points</param>
-        public HashSet<int> FindPointKeys(FindPointsParams Params, int Limit)
+        /// <param name="Multithread">Performs multithreading, increase performance if many parameters are in use</param>
+        public HashSet<int> FindPointKeys(FindPointsParams Params, int Limit, bool Multithread)
         {
             return new();
         }
@@ -34,11 +44,33 @@ namespace GarageGoose.ProceduralLineNetwork
         /// Expand the line network based on the behavior
         /// </summary>
         /// <param name="Behavior">Set of rules for the behavior</param>
+        /// <param name="Multithread">Performs multithreading, will increase performance if there are many points in HashSet or Array</param>
         /// <param name="PointKeysArray">Use multiple PointKeys in an array</param>
         /// <param name="PointKeysHashSet">Use multiple PointKeys in an hashset, prioritized if both isnt null</param>
-        public void ExpandNetwork(ExpandOnPointBehavior Behavior, int[]? PointKeysArray = null, HashSet<int>? PointKeysHashSet = null)
+        public void ExpandNetwork(ExpandOnPointBehavior Behavior, bool Multithread, int[]? PointKeysArray = null, HashSet<int>? PointKeysHashSet = null)
         {
 
+        }
+
+        /// <summary>
+        /// Manually add a point to the line network.
+        /// </summary>
+        /// <param name="Key">Used to identify this specific point internally</param>
+        /// <param name="ID">Used to identify this specific point (or a group of points) via custom IDs (good for categorizing points, etc.)</param>
+        public void AddPoint(Vector2 Location, out uint Key, string[]? ID = null)
+        {
+            Key = 0;
+        }
+
+        /// <summary>
+        /// Manually add a line to the line network.
+        /// </summary>
+        /// <param name="Point1Key">First  point the line connects to</param>
+        /// <param name="Point2Key">Second point the line connects to</param>
+        /// <param name="Key">Used to identify this specific line internally</param>
+        public void AddLine(uint Point1Key, uint Point2Key, out uint Key)
+        {
+            Key = 0;
         }
 
         /// <summary>
@@ -283,40 +315,37 @@ namespace GarageGoose.ProceduralLineNetwork
     }
 
     /// <summary>
-    /// These trackers significanly slow down the line network overall but is permanent when turned off.
-    /// Parameters relying on these parameters will obviously stop working when turned off (it wont crash tho)
+    /// Trackers significanly slow down the line network.
+    /// Needs to rebuild the entire network to turn on again.
+    /// May also slow down merging two line networks together if the disabled tracker on the merging line is enabled on the merger line.
+    /// Parameters relying on these parameters will obviously stop working when turned off. (it wont throw an ArgumentException tho)
     /// </summary>
     public class DisableTracker
     {
         /// <summary>
-        /// 
+        /// SpawnOnPointsThatHasSpecifiedAngle will be disabled
         /// </summary>
         public bool MaxAngleAtPoint = false;
 
         /// <summary>
-        /// 
+        /// SpawnOnPointsThatHasSpecifiedAngle will be disabled
         /// </summary>
         public bool MinAngleAtPoint = false;
 
         /// <summary>
-        /// 
+        /// SpawnOnPointsThatOnlyHasSpecifiedAmountOfLines will be disabled.
         /// </summary>
         public bool LineCountAtPoint = false;
 
         /// <summary>
-        /// 
+        /// NewLinesOnID and SetPointsOnID will be disabled.
         /// </summary>
         public bool PointID = false;
 
         /// <summary>
-        /// 
+        /// PointAddAtIndexRange will be disabled.
         /// </summary>
         public bool PointAdditionOrder = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool LineAdditionOrder = false;
     }
 }
 

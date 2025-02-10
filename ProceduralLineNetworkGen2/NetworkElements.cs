@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-public class Element
+namespace GarageGoose.ProceduralLineNetwork.Elements
 {
     public class Point
     {
