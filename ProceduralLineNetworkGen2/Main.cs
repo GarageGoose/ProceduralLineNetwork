@@ -46,43 +46,24 @@ namespace GarageGoose.ProceduralLineNetwork
         {
             ConcurrentBag<HashSet<uint>> PointKeysFromParams = new();
 
-            if(Params.MaxLinesAtPoint != null || Params.MinLinesAtPoint != null)
+            if (Multithread)
             {
-                //Set to upper and lower bounds if null
-                int Max = Params.MaxLinesAtPoint ?? 100000;
-                int Min = Params.MinLinesAtPoint ?? 0;
-                if (Multithread) Parallel.Invoke(() => PointKeysFromParams.Add(DBHandle.GetAllLineCountAtPointInRange(Max, Min)));
-                else PointKeysFromParams.Add(DBHandle.GetAllLineCountAtPointInRange(Max, Min));
+
             }
 
-            if((Params.PointsAddedAfterIndex != null || Params.PointsAddedBeforeIndex != null) && DB.LineCountAtPoint != null)
-            {
-                //Set to upper and lower bounds if null
-                int Max = Params.PointsAddedBeforeIndex ?? DB.LineCountAtPoint.Count;
-                int Min = Params.MinLinesAtPoint ?? 0;
-                if (Multithread) Parallel.Invoke(() => PointKeysFromParams.Add(DBHandle.GetPointsInOrderOfAdditionRange(Min, Max)));
-                else PointKeysFromParams.Add(DBHandle.GetPointsInOrderOfAdditionRange(Min, Max));
-            }
-
-            void PointAngleLimit()
-            {
-                //Set to upper and lower bounds if null
-                //float Max = M
-            }
-
-            HashSet<uint>[] SortedPointKeysFromParams = PointKeysFromParams.ToArray();
-            Array.Sort(SortedPointKeysFromParams);
+            
             if (PointKeysFromParams.Count == 0) return new();
-            if (PointKeysFromParams.Count == 1) return PointKeysFromParams[0];
-
+            
             //After finding eligible points per parameters, the list is sorted from params with the least eligible keys on it to the most.
             //Then intersect each hashsets with least to the most uints.
             //Sorting improves performance because most of the ineligible points is eliminated already when intersecting from smallest to largest. 
-            PointKeysFromParams.Sort();
-            HashSet<uint> PointKeysFromAllParams = PointKeysFromParams[0];
+            HashSet<uint>[] SortedPointKeysFromParams = PointKeysFromParams.ToArray();
+            if (SortedPointKeysFromParams.Length == 1) return SortedPointKeysFromParams[0];
+            Array.Sort(SortedPointKeysFromParams);
+            HashSet<uint> PointKeysFromAllParams = SortedPointKeysFromParams[0];
             for(int i = 1; i < PointKeysFromParams.Count; i++)
             {
-                PointKeysFromAllParams.Intersect(PointKeysFromParams[i]);
+                PointKeysFromAllParams.Intersect(SortedPointKeysFromParams[i]);
             }
             return PointKeysFromAllParams;
         }
@@ -94,7 +75,46 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <param name="Multithread">Performs multithreading, will increase performance if there are many points in HashSet or Array</param>
         public void ExpandNetwork(HashSet<uint> PointKeys, ExpandOnPointBehavior Behavior, bool Multithread = false)
         {
+            if (PointKeys.Count == 0) return;
 
+            if (Multithread)
+            {
+                //Evenly divide each PointKeys to each core.
+                int CoreCount = Environment.ProcessorCount;
+                List<uint>[] DividePointKeysByCore = new List<uint>[CoreCount];
+                int PointCountPerCore = PointKeys.Count / CoreCount;
+                int CurrentCore  = 0;
+                foreach(uint CurrPointKey in PointKeys)
+                {
+                    if(PointCountPerCore * (CurrentCore + 1) < DividePointKeysByCore[CurrentCore].Count && CurrentCore + 1 != PointCountPerCore)
+                    {
+                        CurrentCore++;
+                    }
+                    DividePointKeysByCore[CurrentCore].Add(CurrPointKey);
+                }
+
+            }
+            else
+            {
+                
+            }
+
+            void CalculateNewPointPosition()
+            {
+
+            }
+            void AdjustPosition()
+            {
+
+            }
+
+            
+        }
+
+        private struct AnglePos
+        {
+            Vector2 Pos;
+            float Angle;
         }
 
         /// <summary>
