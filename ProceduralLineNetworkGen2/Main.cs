@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System.Collections.Concurrent;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using GarageGoose.ProceduralLineNetwork.Elements;
 
 namespace GarageGoose.ProceduralLineNetwork
@@ -26,7 +28,11 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         public void DisableTracker(DisableTracker DT)
         {
-            
+            if (DT.MaxAngleAtPoint)    DB.MaxAngularDistanceAtPoint = null;
+            if (DT.MinAngleAtPoint)    DB.MinAngularDistanceAtPoint = null;
+            if (DT.LineCountAtPoint)   DB.LineCountAtPoint = null;
+            if (DT.PointID)            DB.PointID = null;
+            if (DT.PointAdditionOrder) DB.PointKeysList = null;
         }
 
         /// <summary>
@@ -35,10 +41,50 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Limit">Limits the size of the array</param>
         /// <param name="Params">Set of rules for finding points</param>
-        /// <param name="Multithread">Performs multithreading, increase performance if many parameters are in use</param>
-        public HashSet<int> FindPointKeys(FindPointsParams Params, int Limit, bool Multithread)
+        /// <param name="Multithread">Performs multithreading, beneficial if many parameters are in use</param>
+        public HashSet<uint> FindPointKeys(FindPointsParams Params, bool Multithread = false)
         {
-            return new();
+            ConcurrentBag<HashSet<uint>> PointKeysFromParams = new();
+
+            if(Params.MaxLinesAtPoint != null || Params.MinLinesAtPoint != null)
+            {
+                //Set to upper and lower bounds if null
+                int Max = Params.MaxLinesAtPoint ?? 100000;
+                int Min = Params.MinLinesAtPoint ?? 0;
+                if (Multithread) Parallel.Invoke(() => PointKeysFromParams.Add(DBHandle.GetAllLineCountAtPointInRange(Max, Min)));
+                else PointKeysFromParams.Add(DBHandle.GetAllLineCountAtPointInRange(Max, Min));
+            }
+
+            if((Params.PointsAddedAfterIndex != null || Params.PointsAddedBeforeIndex != null) && DB.LineCountAtPoint != null)
+            {
+                //Set to upper and lower bounds if null
+                int Max = Params.PointsAddedBeforeIndex ?? DB.LineCountAtPoint.Count;
+                int Min = Params.MinLinesAtPoint ?? 0;
+                if (Multithread) Parallel.Invoke(() => PointKeysFromParams.Add(DBHandle.GetPointsInOrderOfAdditionRange(Min, Max)));
+                else PointKeysFromParams.Add(DBHandle.GetPointsInOrderOfAdditionRange(Min, Max));
+            }
+
+            void PointAngleLimit()
+            {
+                //Set to upper and lower bounds if null
+                //float Max = M
+            }
+
+            HashSet<uint>[] SortedPointKeysFromParams = PointKeysFromParams.ToArray();
+            Array.Sort(SortedPointKeysFromParams);
+            if (PointKeysFromParams.Count == 0) return new();
+            if (PointKeysFromParams.Count == 1) return PointKeysFromParams[0];
+
+            //After finding eligible points per parameters, the list is sorted from params with the least eligible keys on it to the most.
+            //Then intersect each hashsets with least to the most uints.
+            //Sorting improves performance because most of the ineligible points is eliminated already when intersecting from smallest to largest. 
+            PointKeysFromParams.Sort();
+            HashSet<uint> PointKeysFromAllParams = PointKeysFromParams[0];
+            for(int i = 1; i < PointKeysFromParams.Count; i++)
+            {
+                PointKeysFromAllParams.Intersect(PointKeysFromParams[i]);
+            }
+            return PointKeysFromAllParams;
         }
 
         /// <summary>
@@ -46,9 +92,7 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Behavior">Set of rules for the behavior</param>
         /// <param name="Multithread">Performs multithreading, will increase performance if there are many points in HashSet or Array</param>
-        /// <param name="PointKeysArray">Use multiple PointKeys in an array</param>
-        /// <param name="PointKeysHashSet">Use multiple PointKeys in an hashset, prioritized if both isnt null</param>
-        public void ExpandNetwork(ExpandOnPointBehavior Behavior, bool Multithread, int[]? PointKeysArray = null, HashSet<int>? PointKeysHashSet = null)
+        public void ExpandNetwork(HashSet<uint> PointKeys, ExpandOnPointBehavior Behavior, bool Multithread = false)
         {
 
         }
@@ -254,23 +298,23 @@ namespace GarageGoose.ProceduralLineNetwork
     /// </summary>
     public class FindPointsParams
     {
-        public string[] PointThatHasAnySpecifiedID;
-        public string[] PointThatHasAllSpecifiedID;
+        public string[]? PointThatHasAnySpecifiedID;
+        public string[]? PointThatHasAllSpecifiedID;
 
-        public float MinAngleBetweenLines;
-        public float MaxAngleBetweenLines;
+        public float? MinAngleBetweenLines;
+        public float? MaxAngleBetweenLines;
 
-        public int MaxAreaDensity;
-        public int MinAreaDensity;
+        public int? MaxAreaDensity;
+        public int? MinAreaDensity;
 
-        public int MaxLinesAtPoint;
-        public int MinLinesAtPoint;
+        public int? MaxLinesAtPoint;
+        public int? MinLinesAtPoint;
 
-        public Vector2 BiasOnAreaLocation;
-        public float BiasOnAreaLocationStrength;
+        public Vector2? BiasOnAreaLocation;
+        public float? BiasOnAreaLocationStrength;
 
-        public int PointsAddedAfterIndex;
-        public int PointsAddedBeforeIndex;
+        public int? PointsAddedAfterIndex;
+        public int? PointsAddedBeforeIndex;
 
         /// <summary>
         /// Only include points that is within range in order of when the point is created
