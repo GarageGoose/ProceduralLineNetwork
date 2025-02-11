@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using GarageGoose.ProceduralLineNetwork.Elements;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
@@ -59,7 +60,9 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <param name="ID">Used to identify this specific point (or a group of points) via custom IDs (good for categorizing points, etc.)</param>
         public void AddPoint(Vector2 Location, out uint Key, string[]? ID = null)
         {
-            Key = 0;
+            Key = DB.NewUniqueElementKey();
+            Elements.Point Point = new(Location, ID);
+            DB.Points.Add(Key, Point);
         }
 
         /// <summary>
@@ -70,29 +73,52 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <param name="Key">Used to identify this specific line internally</param>
         public void AddLine(uint Point1Key, uint Point2Key, out uint Key)
         {
-            Key = 0;
+            Key = DB.NewUniqueElementKey();
+            Line Line = new(Point1Key, Point2Key);
         }
 
         /// <summary>
         /// Manually delete a point, all connected lines going to it will also be deleted.
-        /// PointKey is prioritized when both isnt null
         /// </summary>
-        /// <param name="Index">Get point by index (sorted by oldest to newest)</param>
-        /// <param name="PointKey">Get point by key</param>
-        public void DeletePoint(int? Index = null, uint? PointKey = null)
+        public void DeletePoint(uint PointKey)
         {
-
+            DBHandle.DeletePoint(PointKey);
         }
 
         /// <summary>
         /// Manually delete a line.
-        /// LineKey is prioritized when both isnt null
         /// </summary>
-        /// <param name="Index">Get point by index (sorted by oldest to newest)</param>
-        /// <param name="LineKey">Get point by key</param>
-        public void DeleteLine(int? Index = null, uint? LineKey = null)
+        public void DeleteLine(uint LineKey)
         {
+            DBHandle.DeleteLine(LineKey);
+        }
 
+        /// <summary>
+        /// Identifies element from key
+        /// </summary>
+        public string IdentifyElement(uint Key)
+        {
+            if(DB.Points.ContainsKey(Key))
+            {
+                return "Point";
+            }
+            if (DB.Lines.ContainsKey(Key))
+            {
+                return "Line";
+            }
+            return "Null";
+        }
+
+        /// <summary>
+        /// Get a point object reference using Key
+        /// </summary>
+        public Point GetPoint(uint Key)
+        {
+            if (DB.Points.ContainsKey(Key))
+            {
+                return DB.Points[Key];
+            }
+            return new(Vector2.Zero);
         }
 
         /// <summary>
@@ -202,16 +228,16 @@ namespace GarageGoose.ProceduralLineNetwork
         }
 
         /// <summary>
-        /// Make the line go towards the location as much as possible given the earlier parameters
+        /// Make the line go towards the location as much as possible given the earlier parameters.
+        /// Each item with the same index will represent a single location attraction. 
         /// </summary>
         /// <param name="Strength"></param>
         public ExpandOnPointBehavior SetLocationAttraction(Vector2[] Location, float[] Radius, float[] Strength)
         {
-            if((Location.Length != Radius.Length) || (Strength.Length != Radius.Length))
-            {
-                throw new ArgumentException("Length of each array is not equal");
-            }
             locationAttractions = new LocationAttraction[Location.Length];
+            int[] LengthPerArray = {Location.Length,  Radius.Length, Strength.Length};
+            Array.Sort(LengthPerArray);
+            int MinArrayLengthOfAllParams = LengthPerArray[2];
             for(int i = 0; i < Location.Length; i++)
             {
                 locationAttractions[i].Location = Location[i];
@@ -315,10 +341,10 @@ namespace GarageGoose.ProceduralLineNetwork
     }
 
     /// <summary>
-    /// Trackers significanly slow down the line network.
-    /// Needs to rebuild the entire network to turn on again.
-    /// May also slow down merging two line networks together if the disabled tracker on the merging line is enabled on the merger line.
+    /// These trackers will significanly slow down the line network.
+    /// The option to disabe the trackers is provided here but it needs to rebuild the entire network to turn on the disabled trackers again.
     /// Parameters relying on these parameters will obviously stop working when turned off. (it wont throw an ArgumentException tho)
+    /// May also slow down merging two line networks together if the disabled tracker on the merging line is enabled on the merger line.
     /// </summary>
     public class DisableTracker
     {

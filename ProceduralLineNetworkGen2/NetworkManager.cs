@@ -69,22 +69,20 @@ public class ElementsDatabaseHandler
         DB = DBRef;
     }
 
-    public void AddLine(uint ConnectingPointKeyA, uint ConnectingPointKeyB, float AngleAtLineA, float AngleAtLineB)
-    {
-        uint LineKey = DB.NewUniqueElementKey();
-
-        DB.Lines.Add(LineKey, new(ConnectingPointKeyA, ConnectingPointKeyB));
-
-        //Updates the connected lines list inside the points then update the trackers
-        UpdatePointAddLine(ConnectingPointKeyA, LineKey, AngleAtLineA);
-        UpdatePointAddLine(ConnectingPointKeyB, LineKey, (AngleAtLineB < MathF.PI) ? AngleAtLineB + MathF.PI : AngleAtLineB - MathF.PI);
-    }
-    private void UpdatePointAddLine(uint PointKey, uint LineKey, float Angle)
+    private void UpdatePointLines(uint PointKey, uint LineKey, bool AddLine, float Angle = -1)
     {
         //Use a single reference for the entire operation rather than calling dict each time access is needed
         Point CurrPointRef = DB.Points[PointKey];
 
-        CurrPointRef.AddLine(LineKey, Angle);
+        if (AddLine)
+        {
+            CurrPointRef.AddLine(LineKey, Angle);
+        }
+        else
+        {
+            CurrPointRef.RemoveLine(LineKey);
+        }
+
 
         //Updates MaxAngularDistanceAtPoint tracker
         if (DB.MaxAngularDistanceAtPoint != null)
@@ -210,11 +208,11 @@ public class ElementsDatabaseHandler
         }
 
         //Updates LineCountAtPoint tracker
-        //Assumes that the new line is added before before reaching this
         if (DB.LineCountAtPoint != null)
         {
             //Removes outdated information to the database
-            if(DB.LineCountGetRef(CurrPointRef.ConnectedLines.Count - 1, out var LC_Old))
+            int OldLineCount = AddLine ? -1 : 1;
+            if (DB.LineCountGetRef(CurrPointRef.ConnectedLines.Count + OldLineCount, out var LC_Old))
             {
                 LC_Old.PointKey.Remove(PointKey);
             }
@@ -231,6 +229,17 @@ public class ElementsDatabaseHandler
                 DB.LineCountAtPoint.Add(New);
             }
         }
+    }
+    public void AddLine(uint ConnectingPointKeyA, uint ConnectingPointKeyB, float AngleAtLineA, float AngleAtLineB)
+    {
+        uint LineKey = DB.NewUniqueElementKey();
+
+        DB.Lines.Add(LineKey, new(ConnectingPointKeyA, ConnectingPointKeyB));
+
+        //Updates the connected lines list inside the points then update the trackers
+        UpdatePointLines(ConnectingPointKeyA, LineKey, true, AngleAtLineA);
+        float OppositeAngle = (AngleAtLineB < MathF.PI) ? AngleAtLineB + MathF.PI : AngleAtLineB - MathF.PI;
+        UpdatePointLines(ConnectingPointKeyB, LineKey, true, OppositeAngle);
     }
     public void AddPoint(Vector2 Location, string[]? ID = null)
     {
@@ -263,6 +272,17 @@ public class ElementsDatabaseHandler
                 DB.PointID[IDElement].Add(PointKey);
             }
         }
+    }
+    public void DeleteLine(uint Key)
+    {
+        Line CurrLine = DB.Lines[Key];
+        UpdatePointLines(CurrLine.PointKey1, Key, false);
+        UpdatePointLines(CurrLine.PointKey2, Key, false);
+        DB.Lines.Remove(Key);
+    }
+    public void DeletePoint(uint Key)
+    {
+
     }
     public HashSet<uint> GetAllMaxAngularDistanceAtPointInRange(float Min, float Max)
     {

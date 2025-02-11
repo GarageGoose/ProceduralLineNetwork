@@ -26,6 +26,10 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
         {
             ConnectedLines.Add(Angle, LineKey);
         }
+        public void RemoveLine(uint LineKey)
+        {
+            ConnectedLines.Remove(LineKey); 
+        }
     }
 
     public class Line
