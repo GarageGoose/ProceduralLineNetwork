@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using GarageGoose.ProceduralLineNetwork.Elements;
@@ -24,7 +24,7 @@ namespace GarageGoose.ProceduralLineNetwork
 
         /// <summary>
         /// These trackers significanly slow down the line network overall. Rebuilding the entire network is needed to turn back those parameters on 
-        /// Parameters relying on these parameters will obviously stop working when turned off (it wont throw an ArgumentException tho)
+        /// Parameters relying on these trackers will obviously stop working when turned off (it wont throw an ArgumentException tho)
         /// </summary>
         public void DisableTracker(DisableTracker DT)
         {
@@ -108,7 +108,6 @@ namespace GarageGoose.ProceduralLineNetwork
 
             }
 
-            
         }
 
         private struct AnglePos
