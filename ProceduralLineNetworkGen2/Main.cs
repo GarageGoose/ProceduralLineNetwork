@@ -8,7 +8,7 @@ namespace GarageGoose.ProceduralLineNetwork
     public class LineNetwork
     {
         //Handles storage of the line network
-        private ElementsDatabase DB;
+        private ElementsDatabase DB = new();
 
         //Handles modifiying and retirieving data from the line network
         private ElementsDatabaseHandler DBHandle;
@@ -73,12 +73,18 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="Behavior">Set of rules for the behavior</param>
         /// <param name="Multithread">Performs multithreading, will increase performance if there are many points in HashSet or Array</param>
-        public void ExpandNetwork(HashSet<uint> PointKeys, ExpandOnPointBehavior Behavior, bool Multithread = false)
+        public void ProposeNetworkExpansion(HashSet<uint> PointKeys, ExpandOnPointBehavior Behavior, out Point[] Points, out Line[] Lines, bool Multithread = false)
         {
+            Points = Array.Empty<Point>();
+            Lines = Array.Empty<Line>();
+
             if (PointKeys.Count == 0) return;
 
             if (Multithread)
             {
+                //
+                ConcurrentBag<AnglePos> AnglePositions = new();
+
                 //Evenly divide each PointKeys to each core.
                 int CoreCount = Environment.ProcessorCount;
                 List<uint>[] DividePointKeysByCore = new List<uint>[CoreCount];
@@ -125,7 +131,7 @@ namespace GarageGoose.ProceduralLineNetwork
         {
             Key = DB.NewUniqueElementKey();
             Elements.Point Point = new(Location, ID);
-            DB.Points.Add(Key, Point);
+            DB.Points.TryAdd(Key, Point);
         }
 
         /// <summary>

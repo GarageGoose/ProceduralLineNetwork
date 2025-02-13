@@ -1,13 +1,13 @@
 ﻿using System.Numerics;
-using System.Runtime.InteropServices;
 using GarageGoose.ProceduralLineNetwork.Elements;
+using System.Collections.Concurrent;
 
 public class ElementsDatabase
 {
-    public Dictionary<uint, Point> Points = new();
+    public ConcurrentDictionary<uint, Point> Points = new();
     public List<uint>? PointKeysList = new();
 
-    public Dictionary<uint, Line> Lines = new();
+    public ConcurrentDictionary<uint, Line> Lines = new();
 
     //Trackers for different stuff on points, used when primarily searching for eligible points based on elimination parameters
     public struct ValuedPointKeyHashSet
@@ -56,8 +56,7 @@ public class ElementsDatabase
     private uint CurrUniqueElementKey = 0;
     public uint NewUniqueElementKey()
     {
-        CurrUniqueElementKey++;
-        return CurrUniqueElementKey;
+        return Interlocked.Increment(ref CurrUniqueElementKey);
     }
 }
 
@@ -234,7 +233,7 @@ public class ElementsDatabaseHandler
     {
         uint LineKey = DB.NewUniqueElementKey();
 
-        DB.Lines.Add(LineKey, new(ConnectingPointKeyA, ConnectingPointKeyB));
+        DB.Lines.TryAdd(LineKey, new(ConnectingPointKeyA, ConnectingPointKeyB));
 
         //Updates the connected lines list inside the points then update the trackers
         UpdatePointLines(ConnectingPointKeyA, LineKey, true, AngleAtLineA);
@@ -246,7 +245,7 @@ public class ElementsDatabaseHandler
         //Assignes the unique key for the new element (point), used for referencing this line
         uint PointKey = DB.NewUniqueElementKey();
 
-        DB.Points.Add(PointKey, new(Location, ID));
+        DB.Points.TryAdd(PointKey, new(Location, ID));
 
         //Add relevant values to any active trackers
         if (DB.MaxAngularDistanceAtPoint != null && DB.MaxADPGetRef(MathF.PI * 2, out var MaxADP))
@@ -278,7 +277,7 @@ public class ElementsDatabaseHandler
         Line CurrLine = DB.Lines[Key];
         UpdatePointLines(CurrLine.PointKey1, Key, false);
         UpdatePointLines(CurrLine.PointKey2, Key, false);
-        DB.Lines.Remove(Key);
+        DB.Lines.Remove(Key, out _);
     }
     public void DeletePoint(uint Key)
     {
