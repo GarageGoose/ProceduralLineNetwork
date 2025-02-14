@@ -5,7 +5,7 @@ using GarageGoose.ProceduralLineNetwork.Elements;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
-    public class LineNetwork
+    public partial class LineNetwork
     {
         //Handles storage of the line network
         private ElementsDatabase DB = new();

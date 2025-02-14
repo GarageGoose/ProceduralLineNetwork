@@ -352,4 +352,14 @@ public class NetworkCompute
     {
         DB = DBRef;
     }
+
+    public HashSet<uint> PointsAtWitinRect(Vector2 TopLeft, Vector2 BottomRight)
+    {
+        return new();
+    }
+
+    public Vector2 CalculatePositionByRadsAndLength(Vector2 Origin, float Lenght, float Rads)
+    {
+        return new Vector2();
+    }
 }
