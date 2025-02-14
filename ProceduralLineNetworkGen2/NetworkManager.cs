@@ -1,13 +1,12 @@
 ﻿using System.Numerics;
 using GarageGoose.ProceduralLineNetwork.Elements;
-using System.Collections.Concurrent;
 
 public class ElementsDatabase
 {
-    public ConcurrentDictionary<uint, Point> Points = new();
+    public Dictionary<uint, Point> Points = new();
     public List<uint>? PointKeysList = new();
 
-    public ConcurrentDictionary<uint, Line> Lines = new();
+    public Dictionary<uint, Line> Lines = new();
 
     //Trackers for different stuff on points, used when primarily searching for eligible points based on elimination parameters
     public struct ValuedPointKeyHashSet
@@ -22,6 +21,8 @@ public class ElementsDatabase
     public SortedSet<ValuedPointKeyHashSet>? MaxAngularDistanceAtPoint = new(Comparer<ValuedPointKeyHashSet>.Create((a, b) => a.Val.CompareTo(b.Val)));
     public SortedSet<ValuedPointKeyHashSet>? MinAngularDistanceAtPoint = new(Comparer<ValuedPointKeyHashSet>.Create((a, b) => b.Val.CompareTo(a.Val)));
     public SortedSet<ValuedPointKeyHashSet>? LineCountAtPoint = new(Comparer<ValuedPointKeyHashSet>.Create((a, b) => a.Val.CompareTo(b.Val)));
+    public Dictionary<string, HashSet<uint>>? PointID = new();
+
     public bool MaxADPGetRef(float Angle, out ValuedPointKeyHashSet Ref)
     {
         if (MaxAngularDistanceAtPoint != null && MaxAngularDistanceAtPoint.TryGetValue(new(Angle), out Ref))
@@ -49,7 +50,7 @@ public class ElementsDatabase
         Ref = new(0);
         return false;
     }
-    public Dictionary<string, HashSet<uint>>? PointID = new();
+
 
 
     
@@ -233,7 +234,7 @@ public class ElementsDatabaseHandler
     {
         uint LineKey = DB.NewUniqueElementKey();
 
-        DB.Lines.TryAdd(LineKey, new(ConnectingPointKeyA, ConnectingPointKeyB));
+        DB.Lines.Add(LineKey, new(ConnectingPointKeyA, ConnectingPointKeyB));
 
         //Updates the connected lines list inside the points then update the trackers
         UpdatePointLines(ConnectingPointKeyA, LineKey, true, AngleAtLineA);
@@ -245,7 +246,7 @@ public class ElementsDatabaseHandler
         //Assignes the unique key for the new element (point), used for referencing this line
         uint PointKey = DB.NewUniqueElementKey();
 
-        DB.Points.TryAdd(PointKey, new(Location, ID));
+        DB.Points.Add(PointKey, new(Location, ID));
 
         //Add relevant values to any active trackers
         if (DB.MaxAngularDistanceAtPoint != null && DB.MaxADPGetRef(MathF.PI * 2, out var MaxADP))
@@ -277,7 +278,7 @@ public class ElementsDatabaseHandler
         Line CurrLine = DB.Lines[Key];
         UpdatePointLines(CurrLine.PointKey1, Key, false);
         UpdatePointLines(CurrLine.PointKey2, Key, false);
-        DB.Lines.Remove(Key, out _);
+        DB.Lines.Remove(Key);
     }
     public void DeletePoint(uint Key)
     {

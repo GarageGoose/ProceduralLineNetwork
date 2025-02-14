@@ -39,7 +39,6 @@ namespace GarageGoose.ProceduralLineNetwork
         /// Find eligible point keys based on the parameters
         /// More efficient to find many point keys at once due to how the finding algorithm work (see NetworkManager.cs)
         /// </summary>
-        /// <param name="Limit">Limits the size of the array</param>
         /// <param name="Params">Set of rules for finding points</param>
         /// <param name="Multithread">Performs multithreading, beneficial if many parameters are in use</param>
         public HashSet<uint> FindPointKeys(FindPointsParams Params, bool Multithread = false)
@@ -50,6 +49,11 @@ namespace GarageGoose.ProceduralLineNetwork
             {
 
             }
+            else
+            {
+
+            }
+
 
             
             if (PointKeysFromParams.Count == 0) return new();
