@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using GarageGoose.ProceduralLineNetwork.Elements;
 
-namespace GarageGoose.ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork.Old
 {
     public partial class LineNetwork
     {
