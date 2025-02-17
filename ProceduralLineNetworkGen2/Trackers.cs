@@ -10,6 +10,9 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
 
         //Unique tracker key
         void TrackerKey(uint ElementKey);
+        
+        //Data in
+        bool DataInput(Object[] Datas) => return false;
 
         void OnPointAddition(uint PointKey) => return;
         void OnLineAddition(uint LineKey)  => return;
@@ -22,11 +25,6 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
 
         //Search for objects
         HashSet<uint> Search(Object[] Params);
-    }
-    
-    interface ILineNetworkTrackerDataInput
-    {
-        void DataInput(Object[] Datas);
     }
 
     interface ILineNetworkBehavior
@@ -127,7 +125,7 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
         }
     }
 
-    class TrackElementID : ILineNetworkTracker, ILineNetworkTrackerInput
+    class TrackElementID : ILineNetworkTracker
     {
         void OnLineAddition(uint LineKey)
         {
