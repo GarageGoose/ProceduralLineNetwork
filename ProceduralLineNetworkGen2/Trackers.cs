@@ -1,4 +1,4 @@
-﻿using GarageGoose.ProceduralLineNetwork.Elements;
+using GarageGoose.ProceduralLineNetwork.Elements;
 using System.Numerics;
 
 namespace GarageGoose.ProceduralLineNetwork.Trackers
@@ -7,17 +7,142 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
     {
         //Database of points and lines
         void Database(ref ElementsDatabase DB);
+
         //Unique tracker key
-        void TrackerKey(uint Key);
-        void Add(uint PointKey);
-        void Remove(uint PointKey);
-        void Update(uint PointKey);
+        void TrackerKey(uint ElementKey);
+
+        void OnPointAddition(uint PointKey) => return;
+        void OnLineAddition(uint LineKey)  => return;
+
+        void OnPointUpdate(uint PointKey) => return;
+        void OnLineUpdate(uint LineKey)  => return;
+
+        void OnPointRemoval(uint PointKey) => return;
+        void OnPointRemoval(uint LineKey) => return;
+
         //Search for objects
         HashSet<uint> Search(Object[] Params);
     }
-
-    class Location : ILineNetworkTracker
+    
+    interface ILineNetworkTrackerDataInput
     {
-
+        void DataInput(Object[] Datas);
     }
+
+    interface ILineNetworkBehavior
+    {
+        void Database(ref ElementsDatabase DB);
+        void CurrPoint(uint PointKey);
+        float ApplyRotation(float Radians);
+        float ApplyDist(float Dist);
+    }
+
+    class TrackPointLocation : ILineNetworkTracker
+    {
+        void OnPointAddition(uint PointKey)
+        {
+            
+        }
+
+        void OnPointUpdate(uint PointKey)
+        {
+            
+        }
+        
+        void OnPointRemoval(uint PointKey)
+        {
+            
+        }
+    }
+
+    class TrackPointMaxRotation : ILineNetworkTracker
+    {
+        void OnPointAddition(uint PointKey)
+        {
+            
+        }
+
+        void OnPointUpdate(uint PointKey)
+        {
+            
+        }
+        
+        void OnPointRemoval(uint PointKey)
+        {
+            
+        }
+    }
+    
+    class TrackPointMinRotation : ILineNetworkTracker
+    {
+        void OnPointAddition(uint PointKey)
+        {
+            
+        }
+
+        void OnPointUpdate(uint PointKey)
+        {
+            
+        }
+        
+        void OnPointRemoval(uint PointKey)
+        {
+            
+        }
+    }
+
+    class TrackPointLineCount : ILineNetworkTracker
+    {
+        void OnLineAddition(uint LineKey)
+        {
+            
+        }
+
+        void OnLineUpdate(uint LineKey)
+        {
+            
+        }
+        
+        void OnLineRemoval(uint LineKey)
+        {
+            
+        }
+    }
+
+    class TrackLineLength : ILineNetworkTracker
+    {
+        void OnLineAddition(uint LineKey)
+        {
+            
+        }
+
+        void OnLineUpdate(uint LineKey)
+        {
+            
+        }
+        
+        void OnLineRemoval(uint LineKey)
+        {
+            
+        }
+    }
+
+    class TrackElementID : ILineNetworkTracker, ILineNetworkTrackerInput
+    {
+        void OnLineAddition(uint LineKey)
+        {
+            
+        }
+
+        void OnLineUpdate(uint LineKey)
+        {
+            
+        }
+        
+        void OnLineRemoval(uint LineKey)
+        {
+            
+        }
+    }
+
 }
