@@ -7,29 +7,7 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
     {
         public Vector2 Location;
 
-        public string[]? ID;
-        public float? MinAngle = MathF.PI * 2;
-        public float? MaxAngle = MathF.PI * 2;
-        public uint Key;
-
-        //TKey   = Angle of the connected line
-        //TValue = Key of the line
-        public SortedList<float, uint> ConnectedLines = new();
-        
-        public Point(Vector2 Location, string[]? ID = null)
-        {
-            this.Location = Location;
-            this.ID = ID;
-        }
-
-        public void AddLine(uint LineKey, float Angle)
-        {
-            ConnectedLines.Add(Angle, LineKey);
-        }
-        public void RemoveLine(uint LineKey)
-        {
-            ConnectedLines.Remove(LineKey); 
-        }
+        public Dictionary<uint, object> TrackerData;
     }
 
     public class Line
