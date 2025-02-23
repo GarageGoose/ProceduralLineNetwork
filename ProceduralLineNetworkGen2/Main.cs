@@ -1,211 +1,38 @@
-using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using GarageGoose.ProceduralLineNetwork.Elements;
+using GarageGoose.ProceduralLineNetwork.Module.Interface;
 
-namespace GarageGoose.ProceduralLineNetwork.Old
+namespace GarageGoose.ProceduralLineNetwork
 {
-    public partial class LineNetwork
+    public class LineNetwork
     {
-        //Handles storage of the line network
+        //Contains primary lines and points data
         private ElementsDatabase DB = new();
 
-        //Handles modifiying and retirieving data from the line network
-        private ElementsDatabaseHandler DBHandle;
+        //Used for tracking various stuff on the line network and retrieving elements with specific traits.
+        private TrackerHandler Tracker;
 
-        //Handles various computation needed to find points and to expand the network
-        private NetworkCompute Compute;
+        //Used for custom behavior when expanding the line network.
+        private BehaviorHandler Behavior;
+
+        
 
         public LineNetwork()
         {
-            DBHandle = new(ref DB);
-            Compute = new(ref DB);
+            Tracker  = new(DB);
+            Behavior = new(DB);
         }
 
-        /// <summary>
-        /// These trackers significanly slow down the line network overall. Rebuilding the entire network is needed to turn back those parameters on 
-        /// Parameters relying on these trackers will obviously stop working when turned off (it wont throw an ArgumentException tho)
-        /// </summary>
-        public void DisableTracker(DisableTracker DT)
+        public HashSet<uint> FindPointsViaTrackers(bool Multithread)
         {
-            if (DT.MaxAngleAtPoint)    DB.MaxAngularDistanceAtPoint = null;
-            if (DT.MinAngleAtPoint)    DB.MinAngularDistanceAtPoint = null;
-            if (DT.LineCountAtPoint)   DB.LineCountAtPoint = null;
-            if (DT.PointID)            DB.PointID = null;
-            if (DT.PointAdditionOrder) DB.PointKeysList = null;
+            return new();
         }
 
-        /// <summary>
-        /// Find eligible point keys based on the parameters
-        /// More efficient to find many point keys at once due to how the finding algorithm work (see NetworkManager.cs)
-        /// </summary>
-        /// <param name="Params">Set of rules for finding points</param>
-        /// <param name="Multithread">Performs multithreading, beneficial if many parameters are in use</param>
-        public HashSet<uint> FindPointKeys(FindPointsParams Params, bool Multithread = false)
+        public void ExpandLineNetwork(HashSet<uint> PointKeys)
         {
-            ConcurrentBag<HashSet<uint>> PointKeysFromParams = new();
-
-            if (Multithread)
-            {
-
-            }
-            else
-            {
-
-            }
-
-
             
-            if (PointKeysFromParams.Count == 0) return new();
-            
-            //After finding eligible points per parameters, the list is sorted from params with the least eligible keys on it to the most.
-            //Then intersect each hashsets with least to the most uints.
-            //Sorting improves performance because most of the ineligible points is eliminated already when intersecting from smallest to largest. 
-            HashSet<uint>[] SortedPointKeysFromParams = PointKeysFromParams.ToArray();
-            if (SortedPointKeysFromParams.Length == 1) return SortedPointKeysFromParams[0];
-            Array.Sort(SortedPointKeysFromParams);
-            HashSet<uint> PointKeysFromAllParams = SortedPointKeysFromParams[0];
-            for(int i = 1; i < PointKeysFromParams.Count; i++)
-            {
-                PointKeysFromAllParams.Intersect(SortedPointKeysFromParams[i]);
-            }
-            return PointKeysFromAllParams;
-        }
-
-        /// <summary>
-        /// Expand the line network based on the behavior
-        /// </summary>
-        /// <param name="Behavior">Set of rules for the behavior</param>
-        /// <param name="Multithread">Performs multithreading, will increase performance if there are many points in HashSet or Array</param>
-        public void ProposeNetworkExpansion(HashSet<uint> PointKeys, ExpandOnPointBehavior Behavior, out Point[] Points, out Line[] Lines, bool Multithread = false)
-        {
-            Points = Array.Empty<Point>();
-            Lines = Array.Empty<Line>();
-
-            if (PointKeys.Count == 0) return;
-
-            if (Multithread)
-            {
-                //
-                ConcurrentBag<AnglePos> AnglePositions = new();
-
-                //Evenly divide each PointKeys to each core.
-                int CoreCount = Environment.ProcessorCount;
-                List<uint>[] DividePointKeysByCore = new List<uint>[CoreCount];
-                int PointCountPerCore = PointKeys.Count / CoreCount;
-                int CurrentCore  = 0;
-                foreach(uint CurrPointKey in PointKeys)
-                {
-                    if(PointCountPerCore * (CurrentCore + 1) < DividePointKeysByCore[CurrentCore].Count && CurrentCore + 1 != PointCountPerCore)
-                    {
-                        CurrentCore++;
-                    }
-                    DividePointKeysByCore[CurrentCore].Add(CurrPointKey);
-                }
-
-            }
-            else
-            {
-                
-            }
-
-            void CalculateNewPointPosition()
-            {
-
-            }
-            void AdjustPosition()
-            {
-
-            }
-
-        }
-
-        private struct AnglePos
-        {
-            Vector2 Pos;
-            float Angle;
-        }
-
-        /// <summary>
-        /// Manually add a point to the line network.
-        /// </summary>
-        /// <param name="Key">Used to identify this specific point internally</param>
-        /// <param name="ID">Used to identify this specific point (or a group of points) via custom IDs (good for categorizing points, etc.)</param>
-        public void AddPoint(Vector2 Location, out uint Key, string[]? ID = null)
-        {
-            Key = DB.NewUniqueElementKey();
-            Elements.Point Point = new(Location, ID);
-            DB.Points.TryAdd(Key, Point);
-        }
-
-        /// <summary>
-        /// Manually add a line to the line network.
-        /// </summary>
-        /// <param name="Point1Key">First  point the line connects to</param>
-        /// <param name="Point2Key">Second point the line connects to</param>
-        /// <param name="Key">Used to identify this specific line internally</param>
-        public void AddLine(uint Point1Key, uint Point2Key, out uint Key)
-        {
-            Key = DB.NewUniqueElementKey();
-            Line Line = new(Point1Key, Point2Key);
-        }
-
-        /// <summary>
-        /// Manually delete a point, all connected lines going to it will also be deleted.
-        /// </summary>
-        public void DeletePoint(uint PointKey)
-        {
-            DBHandle.DeletePoint(PointKey);
-        }
-
-        /// <summary>
-        /// Manually delete a line.
-        /// </summary>
-        public void DeleteLine(uint LineKey)
-        {
-            DBHandle.DeleteLine(LineKey);
-        }
-
-        /// <summary>
-        /// Identifies element from key
-        /// </summary>
-        public string IdentifyElement(uint Key)
-        {
-            if(DB.Points.ContainsKey(Key))
-            {
-                return "Point";
-            }
-            if (DB.Lines.ContainsKey(Key))
-            {
-                return "Line";
-            }
-            return "Null";
-        }
-
-        /// <summary>
-        /// Get a point object reference using Key
-        /// </summary>
-        public Point GetPoint(uint Key)
-        {
-            if (DB.Points.ContainsKey(Key))
-            {
-                return DB.Points[Key];
-            }
-            return new(Vector2.Zero);
-        }
-
-        /// <summary>
-        /// Merge two line networks. Selected points on both network will be merged to a single one.
-        /// </summary>
-        /// <param name="MergingLN">Line network to be merged</param>
-        /// <param name="MergeAtThisPointKey">Point to be merged at this line network</param>
-        /// <param name="MergeAtTheMeringLNPointKey">Point to be merged on the merging line network</param>
-        public void MergeLineNetworks(LineNetwork MergingLN, uint MergeAtThisPointKey, uint MergeAtTheMeringLNPointKey)
-        {
-
         }
     }
-
 
     /// <summary>
     /// Parameters for the behavior when expanding a LineNetwork

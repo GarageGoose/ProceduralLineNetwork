@@ -1,53 +1,31 @@
-using GarageGoose.ProceduralLineNetwork.Elements;
-using System.Numerics;
+using GarageGoose.ProceduralLineNetwork.Module.Interface;
 
-namespace GarageGoose.ProceduralLineNetwork.Trackers
+namespace GarageGoose.ProceduralLineNetwork.Module.Default
 {
-    interface ILineNetworkTracker
-    {
-        //Database of points and lines
-        void Database(ref ElementsDatabase DB);
-
-        //Unique tracker key
-        void TrackerKey(uint ElementKey);
-        
-        //Data in
-        bool DataInput(Object[] Datas) => return false;
-
-        void OnPointAddition(uint PointKey) => return;
-        void OnLineAddition(uint LineKey)  => return;
-
-        void OnPointUpdate(uint PointKey) => return;
-        void OnLineUpdate(uint LineKey)  => return;
-
-        void OnPointRemoval(uint PointKey) => return;
-        void OnPointRemoval(uint LineKey) => return;
-
-        //Search for objects
-        HashSet<uint> Search(Object[] Params);
-    }
-
-    interface ILineNetworkBehavior
-    {
-        void Database(ref ElementsDatabase DB);
-        void CurrPoint(uint PointKey);
-        float ApplyRotation(float Radians);
-        float ApplyDist(float Dist);
-    }
 
     class TrackPointLocation : ILineNetworkTracker
     {
-        void OnPointAddition(uint PointKey)
+        public void Database(ElementsDatabase DB)
+        {
+
+        }
+
+        public HashSet<uint> Search()
+        {
+            return new();
+        }
+
+        public void OnPointAddition(uint PointKey)
         {
             
         }
 
-        void OnPointUpdate(uint PointKey)
+        public void OnPointUpdate(uint PointKey)
         {
             
         }
         
-        void OnPointRemoval(uint PointKey)
+        public void OnPointRemoval(uint PointKey)
         {
             
         }
@@ -55,6 +33,16 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
 
     class TrackPointMaxRotation : ILineNetworkTracker
     {
+        public void Database(ElementsDatabase DB)
+        {
+
+        }
+
+        public HashSet<uint> Search()
+        {
+            return new();
+        }
+
         void OnPointAddition(uint PointKey)
         {
             
@@ -73,17 +61,27 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
     
     class TrackPointMinRotation : ILineNetworkTracker
     {
-        void OnPointAddition(uint PointKey)
+        public void Database(ElementsDatabase DB)
+        {
+
+        }
+
+        public HashSet<uint> Search()
+        {
+            return new();
+        }
+
+        public void OnPointAddition(uint PointKey)
         {
             
         }
 
-        void OnPointUpdate(uint PointKey)
+        public void OnPointUpdate(uint PointKey)
         {
             
         }
-        
-        void OnPointRemoval(uint PointKey)
+
+        public void OnPointRemoval(uint PointKey)
         {
             
         }
@@ -91,17 +89,26 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
 
     class TrackPointLineCount : ILineNetworkTracker
     {
-        void OnLineAddition(uint LineKey)
+        public void Database(ElementsDatabase DB)
+        {
+
+        }
+
+        public HashSet<uint> Search()
+        {
+            return new();
+        }
+        public void OnLineAddition(uint LineKey)
         {
             
         }
 
-        void OnLineUpdate(uint LineKey)
+        public void OnLineUpdate(uint LineKey)
         {
             
         }
-        
-        void OnLineRemoval(uint LineKey)
+
+        public void OnLineRemoval(uint LineKey)
         {
             
         }
@@ -109,17 +116,27 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
 
     class TrackLineLength : ILineNetworkTracker
     {
-        void OnLineAddition(uint LineKey)
+        public void Database(ElementsDatabase DB)
+        {
+
+        }
+
+        public HashSet<uint> Search()
+        {
+            return new();
+        }
+
+        public void OnLineAddition(uint LineKey)
         {
             
         }
 
-        void OnLineUpdate(uint LineKey)
+        public void OnLineUpdate(uint LineKey)
         {
             
         }
-        
-        void OnLineRemoval(uint LineKey)
+
+        public void OnLineRemoval(uint LineKey)
         {
             
         }
@@ -127,17 +144,27 @@ namespace GarageGoose.ProceduralLineNetwork.Trackers
 
     class TrackElementID : ILineNetworkTracker
     {
-        void OnLineAddition(uint LineKey)
+        public void Database(ElementsDatabase DB)
+        {
+
+        }
+
+        public HashSet<uint> Search()
+        {
+            return new();
+        }
+
+        public void OnLineAddition(uint LineKey)
         {
             
         }
 
-        void OnLineUpdate(uint LineKey)
+        public void OnLineUpdate(uint LineKey)
         {
             
         }
-        
-        void OnLineRemoval(uint LineKey)
+
+        public void OnLineRemoval(uint LineKey)
         {
             
         }
