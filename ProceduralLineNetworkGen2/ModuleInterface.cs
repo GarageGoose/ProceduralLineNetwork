@@ -10,13 +10,18 @@ namespace GarageGoose.ProceduralLineNetwork.Module.Interface
         //Database of points and lines
         void Database(ElementsDatabase DB);
 
-        //Search for objects
+        //
         HashSet<uint> FindObjects();
+
+        //
+        int EstimateAmountOfPoints();
+
+        //
+        bool IsElementEligible(uint Key);
     }
 
     public interface ILineNetworkEventListener
     {
-        void Database(ElementsDatabase DB);
         void OnPointAddition(uint PointKey) { }
         void OnPointUpdate(uint PointKey) { }
         void OnPointRemoval(uint PointKey) { }
@@ -25,9 +30,10 @@ namespace GarageGoose.ProceduralLineNetwork.Module.Interface
         void OnLineRemoval(uint LineKey) { }
     }
 
-    public interface ILineNetworkModulesAccess
+    public interface ILineNetworkModuleDependency
     {
-        void AccessModules(ModuleHandler MH);
+        T[] InvokeModules<T>() where T : class;
+        void GetModules<T>(T[] Modules) where T : class;
     }
 
     /// <summary>
@@ -36,8 +42,15 @@ namespace GarageGoose.ProceduralLineNetwork.Module.Interface
     public interface ILineNetworkBehavior
     {
         void Database(ref ElementsDatabase DB);
-        void CurrElement(uint ElementKey);
-        float ApplyRotation(float Radians);
-        float ApplyDist(float Dist);
+        void CurrElement(uint ElementKey, TypeOfElement Element);
+        float ApplyRadian(float CurrRadians);
+        float ApplyDist(float CurrDist);
+
+    }
+
+    public enum TypeOfElement
+    {
+        Point = 0,
+        Line = 1
     }
 }

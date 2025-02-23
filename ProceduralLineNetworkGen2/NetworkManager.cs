@@ -8,48 +8,56 @@ public class ElementsDatabase
     Dictionary<uint, Line> Lines = new();
 }
 
-public class BehaviorHandler
-{
-    private ElementsDatabase DB;
-    public BehaviorHandler(ElementsDatabase DB) { this.DB = DB; }
-
-    public Dictionary<Type, ILineNetworkBehavior> LineNetworkBehaviors = new();
-    public void Add(ILineNetworkBehavior LNB)
-    {
-        LineNetworkBehaviors.Add(LNB.GetType(), LNB);
-    }
-}
-
-public class TrackerHandler
-{
-    private ElementsDatabase DB;
-    public TrackerHandler(ElementsDatabase DB) { this.DB = DB; }
-
-    public Dictionary<Type, ILineNetworkTracker> LineNetworkTrackers = new();
-    public void Add(ILineNetworkTracker LNT)
-    {
-        LineNetworkTrackers.Add(LNT.GetType(), LNT);
-    }
-}
-
 public class ModuleHandler
 {
-    private ElementsDatabase DB;
-    public ModuleHandler(ElementsDatabase DB) { this.DB = DB; }
     private Dictionary<Type, Object> Modules = new();
-    private List<Type> ModuleImplementsILineNetworkTracker       = new();
-    private List<Type> ModuleImplementsILineNetworkEventListener = new();
-    private List<Type> ModuleImplementsILineNetworkBehavior      = new();
-    private List<Type> ModuleImplementsILineNetworkModulesAccess = new();
+    private List<Type> ModuleImplementsILineNetworkTracker          = new();
+    private List<Type> ModuleImplementsILineNetworkEventListener    = new();
+    private List<Type> ModuleImplementsILineNetworkBehavior         = new();
+    private List<Type> ModuleImplementsILineNetworkModuleDependency = new();
 
-    public void Add<T>(T Module) where T : ILineNetworkBehavior, ILineNetworkEventListener, ILineNetworkTracker, ILineNetworkModulesAccess
+    public void Add<T>(T Module) where T : ILineNetworkBehavior, ILineNetworkEventListener, ILineNetworkTracker, ILineNetworkModuleDependency
     {
+        Type ModuleType = typeof(T);
+        Modules.Add(ModuleType, Module);
+        if (Module is ILineNetworkBehavior) ModuleImplementsILineNetworkBehavior.Add(ModuleType);
+        if (Module is ILineNetworkEventListener) ModuleImplementsILineNetworkEventListener.Add(ModuleType);
+        if (Module is ILineNetworkTracker) ModuleImplementsILineNetworkTracker.Add(ModuleType);
+        if (Module is ILineNetworkModuleDependency)
+        {
+            ModuleImplementsILineNetworkModuleDependency.Add(ModuleType);
+            List<T> ModuleDependencies = new();
+            ILineNetworkModuleDependency ModuleWithDependency = Module;
+            foreach(T ModuleDependency in ModuleWithDependency.InvokeModules<T>())
+            {
 
+            }
+        }
     }
 
     public T Get<T>() where T : class
     {
         if(Modules.TryGetValue(typeof(T), out var Module)) return Module as T;
         throw new KeyNotFoundException(typeof(T) + " Does not currently exist");
+    }
+
+    public List<Type> GetBehaviorModules()
+    {
+        return ModuleImplementsILineNetworkBehavior;
+    }
+
+    public List<Type> GetTrackerModules()
+    {
+        return ModuleImplementsILineNetworkTracker;
+    }
+
+    public List<Type> GetEventListenerModules()
+    {
+        return ModuleImplementsILineNetworkBehavior;
+    }
+
+    public List<Type> GetModuleWithDependency()
+    {
+        return ModuleImplementsILineNetworkModuleDependency;
     }
 }
