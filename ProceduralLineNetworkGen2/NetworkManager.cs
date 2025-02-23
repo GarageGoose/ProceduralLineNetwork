@@ -11,47 +11,45 @@ public class ElementsDatabase
 public class BehaviorHandler
 {
     private ElementsDatabase DB;
-    public BehaviorHandler(ElementsDatabase DB)
-    {
-        this.DB = DB;
-    }
+    public BehaviorHandler(ElementsDatabase DB) { this.DB = DB; }
+
     public Dictionary<Type, ILineNetworkBehavior> LineNetworkBehaviors = new();
     public void Add(ILineNetworkBehavior LNB)
     {
         LineNetworkBehaviors.Add(LNB.GetType(), LNB);
-    }
-    public T Get<T>() where T : class
-    {
-        if (LineNetworkBehaviors.TryGetValue(typeof(T), out var Behavior)) return Behavior as T;
-        throw new KeyNotFoundException(typeof(T) + " Does not currently exist");
     }
 }
 
 public class TrackerHandler
 {
     private ElementsDatabase DB;
-    public TrackerHandler(ElementsDatabase DB)
-    {
-        this.DB = DB;
-    }
+    public TrackerHandler(ElementsDatabase DB) { this.DB = DB; }
+
     public Dictionary<Type, ILineNetworkTracker> LineNetworkTrackers = new();
     public void Add(ILineNetworkTracker LNT)
     {
         LineNetworkTrackers.Add(LNT.GetType(), LNT);
-    }
-    public T Get<T>() where T : class
-    {
-        if (LineNetworkTrackers.TryGetValue(typeof(T), out var Behavior)) return Behavior as T;
-        throw new KeyNotFoundException(typeof(T) + " Does not currently exist");
     }
 }
 
 public class ModuleHandler
 {
     private ElementsDatabase DB;
-
+    public ModuleHandler(ElementsDatabase DB) { this.DB = DB; }
     private Dictionary<Type, Object> Modules = new();
-    private List<Type> ModuleImplementsILineNetworkTracker = new();
+    private List<Type> ModuleImplementsILineNetworkTracker       = new();
     private List<Type> ModuleImplementsILineNetworkEventListener = new();
-    private List<Type> ModuleImplementsILineNetworkBehavior = new();
+    private List<Type> ModuleImplementsILineNetworkBehavior      = new();
+    private List<Type> ModuleImplementsILineNetworkModulesAccess = new();
+
+    public void Add<T>(T Module) where T : ILineNetworkBehavior, ILineNetworkEventListener, ILineNetworkTracker, ILineNetworkModulesAccess
+    {
+
+    }
+
+    public T Get<T>() where T : class
+    {
+        if(Modules.TryGetValue(typeof(T), out var Module)) return Module as T;
+        throw new KeyNotFoundException(typeof(T) + " Does not currently exist");
+    }
 }

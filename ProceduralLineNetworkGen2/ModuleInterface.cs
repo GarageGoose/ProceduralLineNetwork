@@ -1,4 +1,6 @@
-﻿namespace GarageGoose.ProceduralLineNetwork.Module.Interface
+﻿using System.Runtime.InteropServices;
+
+namespace GarageGoose.ProceduralLineNetwork.Module.Interface
 {
     /// <summary>
     /// Used for tracking various stuff on the line network and retrieving elements with specific traits.
@@ -21,6 +23,11 @@
         void OnLineAddition(uint LineKey) { }
         void OnLineUpdate(uint LineKey) { }
         void OnLineRemoval(uint LineKey) { }
+    }
+
+    public interface ILineNetworkModulesAccess
+    {
+        void AccessModules(ModuleHandler MH);
     }
 
     /// <summary>
