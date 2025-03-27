@@ -32,7 +32,6 @@ namespace GarageGoose.ProceduralLineNetwork
     {
         public ObservableDict<Point> Points;
         public ObservableDict<Line> Lines;
-
         public ElementsDatabase(TrackerManager Tracker)
         {
             Points = new(Tracker);

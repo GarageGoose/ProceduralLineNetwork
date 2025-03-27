@@ -59,7 +59,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// <summary>
         /// Main operation (eg. adding new elements).
         /// </summary>
-        Changes,
+        MainChanges,
 
         /// <summary>
         /// Executed after the main operation (eg. clearing line intersections after adding new elements).
