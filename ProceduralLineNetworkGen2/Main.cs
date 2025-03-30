@@ -9,33 +9,81 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <summary>
         /// Handles managing data for points and lines.
         /// </summary>
-        public ElementsDatabase DB;
+        public ElementsDatabase DB = new();
 
         /// <summary>
         /// Handles managing behavior of the line network when modifying it
         /// </summary>
-        public BehaviorManager Behavior;
+        public ModificationManager Behavior;
 
         /// <summary>
         /// Handles data related to the networks' elements.
         /// </summary>
-        public TrackerManager  Tracker = new();
+        public TrackerManager Tracker = new();
 
         public LineNetwork()
         {
-            DB = new(Tracker);
             Behavior = new(DB);
         }
     }
 
     public class ElementsDatabase
     {
-        public ObservableDict<Point> Points;
-        public ObservableDict<Line> Lines;
-        public ElementsDatabase(TrackerManager Tracker)
+        public PointDict Points;
+        public LineDict Lines;
+
+        public class PointDict : Dictionary<uint, Point>
         {
-            Points = new(Tracker);
-            Lines = new(Tracker);
+            public new void Add(uint Key, Point NewPoint)
+            {
+                base.Add(Key, NewPoint);
+            }
+            public new void Remove(uint Key)
+            {
+                base.Remove(Key);
+            }
+
+            public new Point this[uint Key]
+            {
+                get => base[Key];
+                set
+                {
+                    base[Key] = value;
+                }
+            }
+        }
+
+        public class LineDict : Dictionary<uint, Line>
+        {
+            PointDict PDict;
+            public LineDict(PointDict PointDict)
+            {
+                PDict = PointDict;
+            }
+            public new void Add(uint Key, Line NewLine)
+            {
+                base.Add(Key, NewLine);
+            }
+            public new void Remove(uint Key)
+            {
+                base.Remove(Key);
+            }
+            public new Line this[uint Key]
+            {
+                get => base[Key];
+                set
+                {
+                    base[Key] = value;
+                }
+            }
+            private void LineAdded()
+            {
+
+            }
+            private void LineDeleted()
+            {
+
+            }
         }
     }
 
@@ -44,7 +92,7 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <summary>
         /// Components used for tracking various stuff in the line network.
         /// </summary>
-        public SortedList<Type, ILineNetworkTracker> Components = new();
+        public TrackerComponents Components = new();
 
         /// <summary>
         /// Search for eligible elements determined by all modules.
@@ -68,100 +116,27 @@ namespace GarageGoose.ProceduralLineNetwork
         {
             return new HashSet<uint>();
         }
+
+        public class TrackerComponents : List<ILineNetworkTracker>
+        {
+            public new void Add(ILineNetworkTracker Instance)
+            {
+
+            }
+        }
     }
 
-    public class BehaviorManager
+    public class ModificationManager
     {
         private ElementsDatabase Database;
-        public BehaviorManager(ElementsDatabase Database)
+        public ModificationManager(ElementsDatabase Database)
         {
             this.Database = Database;
         }
-
-        /// <summary>
-        /// Components used for the behavior of points when expanding
-        /// </summary>
-        public SortedList<Type, ILineNetworkBehavior> Components = new();
-
-        /// <summary>
-        /// Expand the line network will all components having equal contribution.
-        /// </summary>
-        /// <param name="Points">PointKeys that will be used.</param>
-        /// <param name="Multithread">Perform operation on multiple points simultaneously.</param>
-        public void Expand(HashSet<uint> Points, bool Multithread)
+        public void Execute(ILineNetworkModification[] UsedComponents)
         {
 
         }
-
-        /// <summary>
-        /// Expand the line network with having more control over the components.
-        /// </summary>
-        /// <param name="Points">PointKeys that will be used. (Better if more points at once)</param>
-        /// <param name="Components">Components that will be used.</param>
-        /// <param name="ComponentWeight">Relative contribution by each component where Components[i] == ComponentWeight[i].</param>
-        /// <param name="Multithread">Perform operation on multiple points simultaneously.</param>
-        public void ExpandAdvanced(HashSet<uint> Points, Type[] Components, float[] ComponentWeight, bool Multithread)
-        {
-
-        }
-    }
-
-    public class ObservableDict<TValue> : Dictionary<uint, TValue>
-    {
-        private TrackerManager Tracker;
-        private readonly ElementType EType;
-
-        public ObservableDict(TrackerManager Tracker)
-        {
-            this.Tracker = Tracker;
-            if (typeof(TValue) == typeof(Point))
-            {
-                EType = ElementType.Point;
-            }
-            else if (typeof(TValue) == typeof(Line))
-            {
-                EType = ElementType.Line;
-            }
-            else
-            {
-                EType = ElementType.Unknown;
-            }
-        }
-
-        public new void Add(uint key, TValue value)
-        {
-            base.Add(key, value);
-            for (int i = 0; i < Tracker.Components.Count; i++)
-            {
-                Tracker.Components.Values[i].OnElementAddition(key, EType);
-            }
-        }
-
-        public new void Remove(uint key)
-        {
-            base.Remove(key);
-            for (int i = 0; i < Tracker.Components.Count; i++)
-            {
-                Tracker.Components.Values[i].OnElementRemoval(key, EType);
-            }
-        }
-
-        public new TValue this[uint key]
-        {
-            get => base[key];
-            set
-            {
-                for (int i = 0; i < Tracker.Components.Count; i++)
-                {
-                    Tracker.Components.Values[i].OnElementUpdate(key, EType);
-                }
-            }
-        }
-    }
-
-    public enum ElementType
-    {
-        Point, Line, Unknown
     }
 }
 
