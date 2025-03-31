@@ -1,6 +1,4 @@
-﻿using GarageGoose.ProceduralLineNetwork.Elements;
-using System.Numerics;
-namespace GarageGoose.ProceduralLineNetwork.Component.Interface
+﻿namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
     public interface ILineNetwork
     {
@@ -18,22 +16,22 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
     {
         //Point update
         void OnPointAddition(uint PointKey) { }
-        void OnPointUpdate(uint PointKey) { }
+        void OnPointModification(uint PointKey) { }
         void OnPointRemoval(uint PointKey) { }
 
         //Line update
         void OnLineAddition(uint LineKey) { }
-        void OnLineUpdate(uint LineKey) { }
+        void OnLineModification(uint LineKey) { }
         void OnLineRemoval(uint LineKey) { }
 
         //Modification update
         void ModificationStart() { }
-        void ModificationComponentStart() { }
-        void ModificationComponentFinished() { }
         void ModificationFinished() { }
+        void ModificationComponentStart(ILineNetworkModification Component) { }
+        void ModificationComponentFinished(ILineNetworkModification Component) { }
 
         //General
-        void RefreshData() { }
+        void RefreshData() { }  //Triggered when the database is supected to be out of sync
         bool ThreadSafeAccess();
         HashSet<uint> Search() { return new(); }
     }
