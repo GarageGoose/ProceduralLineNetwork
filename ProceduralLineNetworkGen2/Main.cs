@@ -1,54 +1,75 @@
-using GarageGoose.ProceduralLineNetwork.Component.Interface;
-using GarageGoose.ProceduralLineNetwork.Elements;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
+
+using GarageGoose.ProceduralLineNetwork.Component.Interface;
+using GarageGoose.ProceduralLineNetwork.Elements;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
     public class LineNetwork
     {
         /// <summary>
-        /// Handles managing data for points and lines.
+        /// Handles essential managing data for points and lines.
+        /// More complex data of these elements is handled by tracker components.
         /// </summary>
-        public ElementsDatabase DB;
+        public readonly ElementsDatabase DB;
 
         /// <summary>
-        /// Handles managing behavior of the line network when modifying it
+        /// Handles the modification of the line network.
         /// </summary>
-        public ModificationManager Behavior;
+        public readonly ModificationManager Modification;
 
         /// <summary>
         /// Handles data related to the networks' elements.
         /// </summary>
-        public TrackerManager Tracker = new();
+        public readonly TrackerManager Tracker = new();
 
         public LineNetwork()
         {
             DB = new(Tracker);
-            Behavior = new(DB, Tracker);
+            Modification = new(DB, Tracker);
         }
     }
 
+    /// <summary>
+    /// Handles essential managing data for points and lines.
+    /// More complex data of these elements is handled by tracker components.
+    /// </summary>
     public class ElementsDatabase
     {
-        private TrackerManager TM;
+        TrackerManager TM;
         public PointDict Points;
         public LineDict Lines;
+        private uint UniqueElementKey = 0;
+
+        public uint GetNewUniqueKey()
+        {
+            return Interlocked.Increment(ref UniqueElementKey);
+        }
 
         public ElementsDatabase(TrackerManager TM)
         {
             this.TM = TM;
-            Points = new(TM);
-            Lines = new(TM);
+            Points = new(TM, this);
+            Lines = new(TM, this);
         }
 
         public class PointDict : Dictionary<uint, Point>
         {
             TrackerManager TM;
-            public PointDict(TrackerManager TM)
+            ElementsDatabase ED;
+            public PointDict(TrackerManager TM, ElementsDatabase ED)
             {
                 this.TM = TM;
+                this.ED = ED;
+            }
+            public uint AddAuto(Point NewPoint)
+            {
+                uint Key = ED.GetNewUniqueKey();
+                base.Add(Key, NewPoint);
+                PointAdded(Key);
+                return Key;
             }
             public new void Add(uint Key, Point NewPoint)
             {
@@ -80,10 +101,14 @@ namespace GarageGoose.ProceduralLineNetwork
                 get => base[Key];
                 set
                 {
-                    base[Key] = value;
-                    foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnPointModification))
+                    foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnPointModificationBefore))
                     {
-                        TrackerComponent.OnPointModification(Key);
+                        TrackerComponent.OnPointModificationBefore(Key);
+                    }
+                    base[Key] = value;
+                    foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnPointModificationAfter))
+                    {
+                        TrackerComponent.OnPointModificationAfter(Key);
                     }
                 }
             }
@@ -106,9 +131,18 @@ namespace GarageGoose.ProceduralLineNetwork
         public class LineDict : Dictionary<uint, Line>
         {
             TrackerManager TM;
-            public LineDict(TrackerManager TM)
+            ElementsDatabase ED;
+            public LineDict(TrackerManager TM, ElementsDatabase ED)
             {
                 this.TM = TM;
+                this.ED = ED;
+            }
+            public uint AddAuto(Line NewLine)
+            {
+                uint Key = ED.GetNewUniqueKey();
+                base.Add(Key, NewLine);
+                LineAdded(Key);
+                return Key;
             }
             public new void Add(uint Key, Line NewLine)
             {
@@ -126,8 +160,13 @@ namespace GarageGoose.ProceduralLineNetwork
             }
             public new void Remove(uint Key)
             {
-                LineDeleted(Key);
+                LineRemoval(Key);
                 base.Remove(Key);
+            }
+            public new void Remove(uint Key, out Line Line)
+            {
+                LineRemoval(Key);
+                base.Remove(Key, out Line);
             }
             public new Line this[uint Key]
             {
@@ -137,10 +176,14 @@ namespace GarageGoose.ProceduralLineNetwork
                 }
                 set
                 {
-                    base[Key] = value;
-                    foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnLineModification))
+                    foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnLineModificationBefore))
                     {
-                        TrackerComponent.OnLineModification(Key);
+                        TrackerComponent.OnLineModificationBefore(Key);
+                    }
+                    base[Key] = value;
+                    foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnLineModificationAfter))
+                    {
+                        TrackerComponent.OnLineModificationAfter(Key);
                     }
                 }
             }
@@ -151,7 +194,7 @@ namespace GarageGoose.ProceduralLineNetwork
                     TrackerComponent.OnLineAddition(Key);
                 }
             }
-            private void LineDeleted(uint Key)
+            private void LineRemoval(uint Key)
             {
                 foreach (ILineNetworkTracker TrackerComponent in TM.GetTrackerByMethod(TrackerManager.InterfaceMethodNames.OnPointRemoval))
                 {
@@ -160,6 +203,7 @@ namespace GarageGoose.ProceduralLineNetwork
             }
         }
     }
+
 
     public class TrackerManager
     {
@@ -223,10 +267,10 @@ namespace GarageGoose.ProceduralLineNetwork
                 InterfaceMethodNamesString = new string[] 
                 {
                     //Point update
-                    "OnPointAddition", "OnPointModification", "OnPointRemoval",
+                    "OnPointAddition", "OnPointModificationBefore", "OnPointModificationAfter", "OnPointRemoval",
 
                     //Line update
-                    "OnLineAddition", "OnLineModification", "OnLineRemoval",
+                    "OnLineAddition", "OnLineModificationBefore", "OnLineModificationAfter", "OnLineRemoval",
 
                     //Modification update
                     "ModificationStart", "ModificationFinished", "ModificationComponentStart", "ModificationComponentFinished",
@@ -282,10 +326,10 @@ namespace GarageGoose.ProceduralLineNetwork
         public enum InterfaceMethodNames
         {
             //Point update
-            OnPointAddition, OnPointModification, OnPointRemoval,
+            OnPointAddition, OnPointModificationBefore, OnPointModificationAfter, OnPointRemoval,
 
             //Line update
-            OnLineAddition, OnLineModification, OnLineRemoval,
+            OnLineAddition, OnLineModificationBefore, OnLineModificationAfter, OnLineRemoval,
 
             //Modification update
             ModificationStart, ModificationFinished, ModificationComponentStart, ModificationComponentFinished,
@@ -302,6 +346,9 @@ namespace GarageGoose.ProceduralLineNetwork
         }
     }
 
+    /// <summary>
+    /// Handles the modification of the line network.
+    /// </summary>
     public class ModificationManager
     {
         private ElementsDatabase Database;

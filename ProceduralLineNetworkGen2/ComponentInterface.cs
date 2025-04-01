@@ -16,12 +16,14 @@
     {
         //Point update
         void OnPointAddition(uint PointKey) { }
-        void OnPointModification(uint PointKey) { }
+        void OnPointModificationBefore(uint PointKey) { }
+        void OnPointModificationAfter(uint PointKey) { }
         void OnPointRemoval(uint PointKey) { }
 
         //Line update
         void OnLineAddition(uint LineKey) { }
-        void OnLineModification(uint LineKey) { }
+        void OnLineModificationBefore(uint LineKey) { }
+        void OnLineModificationAfter(uint LineKey) { }
         void OnLineRemoval(uint LineKey) { }
 
         //Modification update
