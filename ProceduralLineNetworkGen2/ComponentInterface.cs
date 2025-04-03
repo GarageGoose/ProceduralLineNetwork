@@ -1,41 +1,56 @@
 ﻿namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
-    public interface ILineNetwork
+    /// <summary>
+    /// Inherit the instance of a stuff within the LineNetwork.
+    /// </summary>
+    public interface ILineNetworkInherit
     {
-        void InheritDatabase(ElementsDatabase DB) { }
-        void InheritTrackerComponents(TrackerManager Tracker) { }
-        void InheritModificationComponents(ModificationManager Modification) { }
-        void Seed(int Seed) { }
-        bool ThreadSafeOperation();
+        /// <summary>
+        /// Inherit essential managers (ElementsDatabase, ModificationManager, TrackingManager) and other external components aswell (eg. TrackpointAngles, TrackConnectedLinesOnPoint).
+        /// Returns true when the operation is successful and false if not. Components is null if false aswall.
+        /// </summary>
+        /// <typeparam name="TLineNetwork">Target Type</typeparam>
+        /// <param name="Component">Instance of the Target Type in the LineNetwork.</param>
+        /// <returns></returns>
+        bool GetComponent<TLineNetwork>(out TLineNetwork? Component);
     }
 
     /// <summary>
-    /// Used for tracking various stuff on the line network and retrieving elements with specific traits.
+    /// Track various stuff on the line network and retrieving elements with specific traits.
     /// </summary>
-    public interface ILineNetworkTracker
+    public interface ILineNetworkTracking
     {
-        //Point update
-        void OnPointAddition(uint PointKey) { }
-        void OnPointModificationBefore(uint PointKey) { }
-        void OnPointModificationAfter(uint PointKey) { }
-        void OnPointRemoval(uint PointKey) { }
+        /// <returns>Types of events to track</returns>
+        TrackingUpdateType[] SubscribeToEvents();
 
-        //Line update
-        void OnLineAddition(uint LineKey) { }
-        void OnLineModificationBefore(uint LineKey) { }
-        void OnLineModificationAfter(uint LineKey) { }
-        void OnLineRemoval(uint LineKey) { }
+        /// <param name="UpdateType">Type of event that happened</param>
+        /// <returns>Data associated with the event (Look to TrackingUpdateType for more info)</returns>
+        Object? LineNetworkChange(TrackingUpdateType UpdateType);
 
-        //Modification update
-        void ModificationStart() { }
-        void ModificationFinished() { }
-        void ModificationComponentStart(ILineNetworkModification Component) { }
-        void ModificationComponentFinished(ILineNetworkModification Component) { }
-
-        //General
-        void RefreshData() { }  //Triggered when the database is supected to be out of sync
         bool ThreadSafeAccess();
-        HashSet<uint> Search() { return new(); }
+    }
+
+    public enum TrackingUpdateType
+    {
+        //Point update (Returns the point key (uint) associated with the event)
+        OnPointAddition, OnPointModificationBefore, OnPointModificationAfter, OnPointRemoval,
+
+        //Line update (Returns the line key (uint) associated with the event)
+        OnLineAddition, OnLineModificationBefore, OnLineModificationAfter, OnLineRemoval,
+
+        //Modification status update (Returns null)
+        ModificationStart, ModificationFinished,
+        
+        //Modification component status update (Returns the component associated with the update)
+        ModificationComponentStart, ModificationComponentFinished
+    }
+
+    public interface ILineNetworkTrackingSearch
+    {
+        bool ThreadSafeSearch();
+
+        /// <returns>The eligible elements key</returns>
+        HashSet<uint> Search();
     }
 
     /// <summary>
@@ -43,7 +58,7 @@
     /// </summary>
     public interface ILineNetworkModification
     {
-        void SelectedElements(HashSet<uint> Elements) { }
-        void Execute();
+        /// <param name="SelectedElements">Target elements to perform the modification</param>
+        void ExecuteModification(HashSet<uint> SelectedElements);
     }
 }

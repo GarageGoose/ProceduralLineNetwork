@@ -217,6 +217,18 @@ namespace GarageGoose.ProceduralLineNetwork
         public TrackerManager()
         {
             CBIM = new(Components);
+            Components.CollectionChanged += ComponentSetup;
+        }
+
+        private void ComponentSetup(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems != null)
+            {
+                foreach(ILineNetworkTracker Component in e.NewItems)
+                {
+
+                }
+            }
         }
 
         /// <summary>
@@ -399,3 +411,9 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
 }
 
 
+
+interface Worker
+{
+    void work() { } //Exists but isn't forced to be implemented
+    void eat() { } //This too
+}
