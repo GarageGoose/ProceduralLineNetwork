@@ -7,45 +7,53 @@
     {
         /// <summary>
         /// Inherit essential managers (ElementsDatabase, ModificationManager, TrackingManager) and other external components aswell (eg. TrackpointAngles, TrackConnectedLinesOnPoint).
-        /// Returns true when the operation is successful and false if not. Components is null if false aswall.
-        /// </summary>
-        /// <typeparam name="TLineNetwork">Target Type</typeparam>
-        /// <param name="Component">Instance of the Target Type in the LineNetwork.</param>
-        /// <returns></returns>
-        bool GetComponent<TLineNetwork>(out TLineNetwork? Component);
+        /// <returns>Returns the component (in the same index as Components) when the operation is successful and null if not</returns>
+        void Inherit(LineNetwork LineNetwork);
     }
 
     /// <summary>
     /// Track various stuff on the line network and retrieving elements with specific traits.
     /// </summary>
-    public interface ILineNetworkTracking
+    public interface ILineNetworkObserver
     {
         /// <returns>Types of events to track</returns>
-        TrackingUpdateType[] SubscribeToEvents();
+        UpdateType[] SubscribeToEvents();
 
         /// <param name="UpdateType">Type of event that happened</param>
-        /// <returns>Data associated with the event (Look to TrackingUpdateType for more info)</returns>
-        Object? LineNetworkChange(TrackingUpdateType UpdateType);
-
-        bool ThreadSafeAccess();
+        /// <param name="Data">Data associated with the event (Look to TrackingUpdateType for more info)</param>
+        void LineNetworkChange(UpdateType UpdateType, Object Data);
+        bool ThreadSafeDataAccess();
     }
 
-    public enum TrackingUpdateType
+    public enum UpdateType
     {
-        //Point update (Returns the point key (uint) associated with the event)
+        /// <summary>
+        /// Point update (Returns the point key (uint) associated with the event in LineNetworkChange)
+        /// </summary>
         OnPointAddition, OnPointModificationBefore, OnPointModificationAfter, OnPointRemoval,
 
-        //Line update (Returns the line key (uint) associated with the event)
+        /// <summary>
+        /// Line update (Returns the line key (uint) associated with the event in LineNetworkChange)
+        /// </summary>
         OnLineAddition, OnLineModificationBefore, OnLineModificationAfter, OnLineRemoval,
 
-        //Modification status update (Returns null)
+        /// <summary>
+        /// Modification status update (Returns null in LineNetworkChange)
+        /// </summary>
         ModificationStart, ModificationFinished,
-        
-        //Modification component status update (Returns the component associated with the update)
-        ModificationComponentStart, ModificationComponentFinished
+
+        /// <summary>
+        /// Modification component status update (Returns the component associated with the update in LineNetworkChange)
+        /// </summary>
+        ModificationComponentStart, ModificationComponentFinished,
+
+        /// <summary>
+        /// Refresh data (Can be used when the data is suspected to be out of sync)
+        /// </summary>
+        RefreshData
     }
 
-    public interface ILineNetworkTrackingSearch
+    public interface ILineNetworkElementSearch
     {
         bool ThreadSafeSearch();
 
