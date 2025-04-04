@@ -25,6 +25,7 @@ namespace GarageGoose.ProceduralLineNetwork
             {
                 foreach (ILineNetworkObserver Observer in e.NewItems)
                 {
+                    LineNetwork.InheritComponentAccess(Observer);
                     foreach (UpdateType UpdateSubscription in Observer.SubscribeToEvents())
                     {
                         SpecificUpdateListener.TryAdd(UpdateSubscription, new());
@@ -69,9 +70,11 @@ namespace GarageGoose.ProceduralLineNetwork
             List<HashSet<uint>> EligibleElements = new();
             foreach (ILineNetworkElementSearch Component in Components)
             {
+                LineNetwork.InheritComponentAccess(Component);
                 EligibleElements.Add(Component.Search());
             }
-            HashSet<uint> FinalEligibleElements;
+            HashSet<uint> FinalEligibleElements = new();
+            if (FinalEligibleElements.Count == 0) return FinalEligibleElements; 
             if (Intersect)
             {
                 EligibleElements.Sort(Comparer<HashSet<uint>>.Create((a, b) => a.Count.CompareTo(b.Count)));

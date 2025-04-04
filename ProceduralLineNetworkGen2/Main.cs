@@ -1,29 +1,27 @@
 using GarageGoose.ProceduralLineNetwork.Component.Interface;
-using GarageGoose.ProceduralLineNetwork.Elements;
-using System.Collections.ObjectModel;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
     public class LineNetwork
     {
         /// <summary>
-        /// Handles essential data related to the networks' elements.
+        /// Handles essential data (point position and connecting points on lines) related to the elements on the network.
         /// </summary>
         public readonly ElementsDatabase Database;
 
         /// <summary>
-        /// Handles additional data related to the networks' elements.
+        /// Handles tracking changes and documenting the database further using additional components. This creates more comprehensive data that modification components can work out on.
         /// </summary>
         public readonly TrackerManager Tracker;
 
-        public LineNetwork(ElementsDatabase Database, TrackerManager Tracker)
+        public LineNetwork(bool MultithreadObservers)
         {
-            this.Database = Database;
-            this.Tracker = Tracker;
+            Tracker = new(this, MultithreadObservers);
+            Database = new(Tracker, this);
         }
 
         /// <summary>
-        /// Generates unique keys for identifying elements (Points and Lines)
+        /// Generates unique keys for elements (Points and Lines). Used for identification.
         /// </summary>
         private uint Keys = 0;
         public uint NewKey()
@@ -40,8 +38,9 @@ namespace GarageGoose.ProceduralLineNetwork
             foreach (ILineNetworkModification Component in UsedComponents)
             {
                 Tracker.NotifyObservers(UpdateType.ModificationComponentStart, Component);
-                Component.ExecuteModification(SelectedElements);
-                Tracker.NotifyObservers(UpdateType.ModificationComponentFinished, Component);
+                InheritComponentAccess(Component);
+                bool OperationSuccess = Component.ExecuteModification(SelectedElements);
+                Tracker.NotifyObservers(UpdateType.ModificationComponentFinished, OperationSuccess);
             }
             Tracker.NotifyObservers(UpdateType.ModificationFinished);
         }

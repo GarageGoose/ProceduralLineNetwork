@@ -3,106 +3,114 @@ using GarageGoose.ProceduralLineNetwork.Elements;
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     /// <summary>
-    /// Tracks the connected lines on a point
+    /// Tracks the connected lines on a point. Use TrackPointAngles if angular information is needed and connected lines on a point.
     /// </summary>
-    class TrackConnectedLinesOnPoint : ILineNetwork, ILineNetworkTracker
-    {
-        /// <summary>
-        /// Point key on the Dictionary key and line key on the Hashset.
-        /// </summary>
-        public readonly Dictionary<uint, HashSet<uint>> LinesOnPoint = new();
 
-        int SearchMin = 0;
-        int SearchMax = 0;
-        public void SetSearchRange(int MinOrSpecific, int Max = -1)
+    class TrackPointPositionQuadTree : ILineNetworkInherit, ILineNetworkObserver, ILineNetworkElementSearch
+    {
+        private LineNetwork LN = new(false);
+        void ILineNetworkInherit.Inherit(LineNetwork LineNetwork) { LN = LineNetwork; }
+
+        UpdateType[] ILineNetworkObserver.SubscribeToEvents()
         {
-            SearchMin = MinOrSpecific;
-            SearchMax = Max;
+            return
+            [
+                UpdateType.OnPointAddition, UpdateType.OnPointModificationBefore,
+                UpdateType.OnPointModificationAfter, UpdateType.OnPointRemoval,
+                UpdateType.RefreshData
+            ];
+        }
+        bool ILineNetworkObserver.ThreadSafeDataAccess() { return true; }
+        void ILineNetworkObserver.LineNetworkChange(UpdateType UpdateType, object? Data)
+        {
+
         }
 
-        HashSet<uint> ILineNetworkTracker.Search()
+        bool ILineNetworkElementSearch.ThreadSafeSearch() { return true; }
+        HashSet<uint> ILineNetworkElementSearch.Search()
         {
             return new();
         }
-
-        bool ILineNetwork.ThreadSafeOperation() { return true; }
-        bool ILineNetworkTracker.ThreadSafeAccess() { return true; }
-
-        ElementsDatabase DB = new(new());
-        void ILineNetwork.InheritDatabase(ElementsDatabase DB) { this.DB = DB; }
-
-        void ILineNetworkTracker.OnLineAddition(uint Key)
-        {
-            //Add the new line on LinesOnPoint at the line's point 1
-            LinesOnPoint.TryAdd(DB.Lines[Key].PointKey2, new());
-            LinesOnPoint[DB.Lines[Key].PointKey2].Add(Key);
-
-            //Add the new line on LinesOnPoint at the line's point 2
-            LinesOnPoint.TryAdd(DB.Lines[Key].PointKey1, new());
-            LinesOnPoint[DB.Lines[Key].PointKey1].Add(Key);
-        }
-
-        private uint OldPoint1Key;
-        private uint OldPoint2Key;
-        void ILineNetworkTracker.OnLineModificationBefore(uint Key)
-        {
-            //Save the old point key as it will be used to compare the updated point key if its the same.
-            OldPoint1Key = DB.Lines[Key].PointKey1;
-            OldPoint2Key = DB.Lines[Key].PointKey2;
-        }
-        void ILineNetworkTracker.OnLineModificationAfter(uint Key)
-        {
-            //Check if the PointKey1 changed on the line and if so, update the change at LinesAtPoint
-            if(OldPoint1Key != DB.Lines[Key].PointKey1)
-            {
-                LinesOnPoint[OldPoint1Key].Remove(Key);
-
-                LinesOnPoint.TryAdd(DB.Lines[Key].PointKey1, new());
-                LinesOnPoint[DB.Lines[Key].PointKey1].Add(Key);
-            }
-
-            //Check if the PointKey1 changed on the line and if so, update the change at LinesAtPoint
-            if (OldPoint2Key != DB.Lines[Key].PointKey2)
-            {
-                LinesOnPoint[OldPoint2Key].Remove(Key);
-
-                LinesOnPoint.TryAdd(DB.Lines[Key].PointKey2, new());
-                LinesOnPoint[DB.Lines[Key].PointKey2].Add(Key);
-            }
-        }
-
-        void ILineNetworkTracker.OnLineRemoval(uint Key)
-        {
-            //Remove current line on LinesOnPoint at the line's point 1
-            LinesOnPoint.TryAdd(DB.Lines[Key].PointKey2, new());
-            LinesOnPoint[DB.Lines[Key].PointKey2].Remove(Key);
-
-            //Remove current line on LinesOnPoint at the line's point 2
-            LinesOnPoint.TryAdd(DB.Lines[Key].PointKey1, new());
-            LinesOnPoint[DB.Lines[Key].PointKey1].Remove(Key);
-        }
     }
-    class TrackPointPositionQuadTree : ILineNetwork, ILineNetworkTracker
+
+    class TrackLinesOnPoint : ILineNetworkInherit, ILineNetworkObserver, ILineNetworkElementSearch
     {
+        private LineNetwork LN = new(false);
+        void ILineNetworkInherit.Inherit(LineNetwork LineNetwork) { LN = LineNetwork; }
+
+        public Dictionary<uint, SortedList<float, Angle?>> LinesOnPoint = new();
+        public SortedDictionary<uint, float>? InternalMaxAngles;
+        public SortedDictionary<uint, float>? InternalMinAngles;
+     
+
+        public class Angle
+        {
+            public Angle(float LineAngle, float AngleBetweenLines)
+            {
+                this.LineAngle = LineAngle;
+                this.AngleBetweenLines = AngleBetweenLines;
+            }
+            public float LineAngle;
+            public float AngleBetweenLines;
+        }
+
+
+
+        public TrackLinesOnPoint(bool TrackAngles, bool TrackMaxAngle, bool TrackMinAngle)
+        {
+
+        }
+
+        bool ILineNetworkObserver.ThreadSafeDataAccess() { return true; }
         
-    }
-    class TrackPointAngles : ILineNetwork, ILineNetworkTracker
-    {
-        Dictionary<uint, SortedList<float, uint>> AngleOfALine;
-        Dictionary<uint, SortedList<float, uint>> AngleBetweenLines;
 
-        SortedDictionary<uint, float> MaxAngles;
-        SortedDictionary<uint, float> MinAngles;
-        public TrackPointAngles(bool TrackMaxAngle, bool TrackMinAngle)
+        UpdateType[] ILineNetworkObserver.SubscribeToEvents()
         {
+            return
+            [
+                UpdateType.OnLineAddition, UpdateType.OnLineModificationBefore,
+                UpdateType.OnLineModificationAfter, UpdateType.OnLineRemoval,
+                UpdateType.RefreshData
+            ];
+        }
 
+        void ILineNetworkObserver.LineNetworkChange(UpdateType UpdateType, object? Data)
+        {
+            switch (UpdateType)
+            {
+                case UpdateType.OnLineAddition:
+
+                    break;
+
+                case UpdateType.OnLineModificationBefore:
+
+                    break;
+
+                case UpdateType.OnLineModificationAfter:
+
+                    break;
+
+                case UpdateType.OnLineRemoval:
+
+                    break;
+
+                case UpdateType.RefreshData:
+
+                    break;
+            }
+        }
+
+        bool ILineNetworkElementSearch.ThreadSafeSearch() { return true; }
+        HashSet<uint> ILineNetworkElementSearch.Search()
+        {
+            return new();
         }
     }
     class TrackModificationChanges
     {
         public List<uint, Point?> Before = new(); 
     }
-    class TrackAndModifyCustomIdentifier : ILineNetwork, ILineNetworkTracker, ILineNetworkModification
+    class TrackAndModifyCustomIdentifier : ILineNetworkInherit, ILineNetworkObserver, ILineNetworkElementSearch, ILineNetworkModification
     {
 
     }
