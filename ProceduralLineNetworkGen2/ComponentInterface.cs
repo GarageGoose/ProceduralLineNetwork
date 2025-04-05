@@ -1,17 +1,5 @@
 ﻿namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
-    public interface ILineNetworkInherit
-    {
-        LineNetwork? lineNetwork { get; set; }
-    }
-    public interface ILineNetworkDatabaseInherit
-    {
-        ElementsDatabase? elementsDatabase { get; set; }
-    }
-    public interface ILineNetworkTrackerInherit
-    {
-        TrackerManager? trackerManager { get; set; }
-    }
 
     /// <summary>
     /// Observe changes on the line network. 

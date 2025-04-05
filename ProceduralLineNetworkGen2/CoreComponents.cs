@@ -5,9 +5,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// Tracks the connected lines on a point. Use TrackPointAngles if angular information is needed and connected lines on a point.
     /// </summary>
 
-    class TrackPointPositionQuadTree : ILineNetworkDatabaseInherit, ILineNetworkObserver, ILineNetworkElementSearch
+    class TrackPointPositionQuadTree : ILineNetworkObserver, ILineNetworkElementSearch
     {
-        ElementsDatabase? ILineNetworkDatabaseInherit.elementsDatabase { get; set; }
         bool ILineNetworkObserver.ThreadSafeDataAccess { get; } = true;
         bool ILineNetworkElementSearch.ThreadSafeSearch { get; } = true;
         UpdateType[] ILineNetworkObserver.SubscribeToEvents { get; } =
@@ -50,9 +49,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
     }
 
-    class TrackLinesOnPoint : ILineNetworkDatabaseInherit, ILineNetworkObserver, ILineNetworkElementSearch
+    class TrackLinesOnPoint : ILineNetworkObserver, ILineNetworkElementSearch
     {
-        public ElementsDatabase? elementsDatabase { get; set; }
         public bool ThreadSafeDataAccess { get; } = true;
         public bool ThreadSafeSearch { get; } = true;
 
