@@ -8,36 +8,44 @@ namespace GarageGoose.ProceduralLineNetwork
     {
         private LineNetwork LineNetwork;
         /// <summary>
-        /// Components used for tracking various stuff in the line network.
+        /// Add or remove components used for tracking various stuff in the line network.
+        /// Order is preserved when an update happens if MultithreadObservers is false
         /// </summary>
-        public ObservableCollection<ILineNetworkObserver> ObserverComponents = new();
+        public readonly ObservableCollection<ILineNetworkObserver> ObserverComponents = new();
 
-        private readonly Dictionary<UpdateType, HashSet<ILineNetworkObserver>> SpecificUpdateListener = new();
         public TrackerManager(LineNetwork LineNetwork, bool MultithreadObservers)
         {
             this.LineNetwork = LineNetwork;
             ObserverComponents.CollectionChanged += ObserverComponentSetup;
         }
 
+        //Tracks update subscriptions of observer compnents so that only subscribers of
+        //an specific update type is informed which eliminates unnecessary calls
+        private readonly Dictionary<UpdateType, HashSet<ILineNetworkObserver>> SpecificUpdateListener = new();
+
         private void ObserverComponentSetup(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
+            //Adds new observers update type subscriptions to SpecificUpdateListener
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems != null)
             {
                 foreach (ILineNetworkObserver Observer in e.NewItems)
                 {
-                    LineNetwork.InheritComponentAccess(Observer);
-                    foreach (UpdateType UpdateSubscription in Observer.SubscribeToEvents())
+                    //Inherit access to parts of the line network first if the component needs it before operation
+                    LineNetwork.InheritLineNetworkAccess(Observer);
+                    foreach (UpdateType UpdateSubscription in Observer.SubscribeToEvents)
                     {
                         SpecificUpdateListener.TryAdd(UpdateSubscription, new());
                         SpecificUpdateListener[UpdateSubscription].Add(Observer);
                     }
                 }
             }
+
+            //Removes deleted observers update type subscriptions to SpecificUpdateListener
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove && e.OldItems != null)
             {
                 foreach (ILineNetworkObserver Observer in e.OldItems)
                 {
-                    foreach (UpdateType UpdateSubscription in Observer.SubscribeToEvents())
+                    foreach (UpdateType UpdateSubscription in Observer.SubscribeToEvents)
                     {
                         SpecificUpdateListener[UpdateSubscription].Remove(Observer);
                     }
@@ -48,8 +56,7 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <summary>
         /// Use with caution (Can easily mess data tracking)! Notifies observers when an update happned
         /// </summary>
-        /// <param name="UpdateType"></param>
-        /// <param name="AdditionalInfo"></param>
+        /// <param name="AdditionalInfo">Additional information associated with the update (Check Componentinterface.Updatetype for more info)</param>
         public void NotifyObservers(UpdateType UpdateType, Object? AdditionalInfo = null)
         {
             foreach (ILineNetworkObserver Observer in SpecificUpdateListener[UpdateType])
@@ -64,35 +71,43 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <param name="Components">List of components that will be used.</param>
         /// <param name="Intersect">Qualifies elements that is only eligible in all modules.</param>
         /// <param name="Multithread">Make thread-safe components run simultaneously.</param>
-        /// <returns></returns>
+        /// <returns>Eligible elements</returns>
         public HashSet<uint> Search(ILineNetworkElementSearch[] Components, bool Intersect, bool Multithread)
         {
-            List<HashSet<uint>> EligibleElements = new();
-            foreach (ILineNetworkElementSearch Component in Components)
-            {
-                LineNetwork.InheritComponentAccess(Component);
-                EligibleElements.Add(Component.Search());
-            }
-            HashSet<uint> FinalEligibleElements = new();
-            if (FinalEligibleElements.Count == 0) return FinalEligibleElements; 
+            HashSet<uint> EligibleElements = new();
             if (Intersect)
             {
-                EligibleElements.Sort(Comparer<HashSet<uint>>.Create((a, b) => a.Count.CompareTo(b.Count)));
-                FinalEligibleElements = EligibleElements[0];
-                for (int i = 1; i < EligibleElements.Count; i++)
+                //Separate eligible elements by component so that it can be intersected later
+                List<HashSet<uint>> EligibleElementsByComponent = new();
+                foreach (ILineNetworkElementSearch Component in Components)
                 {
-                    FinalEligibleElements.Intersect(EligibleElements[i]);
+                    //Inherit access to parts of the line network first if the component needs it before operation
+                    LineNetwork.InheritLineNetworkAccess(Component);
+                    EligibleElementsByComponent.Add(Component.Search());
+                }
+
+                //Sort the HashSets (eligible elements by components) from least count to most count to
+                //optimize performance by eliminating many elements early on and decreasing checks
+                EligibleElementsByComponent.Sort(Comparer<HashSet<uint>>.Create((a, b) => a.Count.CompareTo(b.Count)));
+
+
+                //Intersect HashSets from least to most count
+                EligibleElements = EligibleElementsByComponent[0];
+                for (int i = 1; i < EligibleElementsByComponent.Count; i++)
+                {
+                    EligibleElements.Intersect(EligibleElementsByComponent[i]);
                 }
             }
             else
             {
-                FinalEligibleElements = EligibleElements[0];
-                for (int i = 1; i < EligibleElements.Count; i++)
+                foreach (ILineNetworkElementSearch Component in Components)
                 {
-                    FinalEligibleElements.UnionWith(EligibleElements[i]);
+                    //Inherit access to parts of the line network first if the component needs it before operation
+                    LineNetwork.InheritLineNetworkAccess(Component);
+                    EligibleElements.UnionWith(Component.Search());
                 }
             }
-            return FinalEligibleElements;
+            return EligibleElements;
         }
     }
 

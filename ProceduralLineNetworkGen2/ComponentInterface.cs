@@ -2,7 +2,15 @@
 {
     public interface ILineNetworkInherit
     {
-        void Inherit(LineNetwork LineNetwork);
+        LineNetwork? lineNetwork { get; set; }
+    }
+    public interface ILineNetworkDatabaseInherit
+    {
+        ElementsDatabase? elementsDatabase { get; set; }
+    }
+    public interface ILineNetworkTrackerInherit
+    {
+        TrackerManager? trackerManager { get; set; }
     }
 
     /// <summary>
@@ -11,12 +19,12 @@
     public interface ILineNetworkObserver
     {
         /// <returns>Types of events to track</returns>
-        UpdateType[] SubscribeToEvents();
+        UpdateType[] SubscribeToEvents { get; }
 
         /// <param name="UpdateType">Type of event that happened</param>
         /// <param name="Data">Data associated with the event (Look to TrackingUpdateType for more info)</param>
         void LineNetworkChange(UpdateType UpdateType, Object? Data);
-        bool ThreadSafeDataAccess();
+        bool ThreadSafeDataAccess { get; }
     }
 
     public enum UpdateType
@@ -49,7 +57,7 @@
 
     public interface ILineNetworkElementSearch
     {
-        bool ThreadSafeSearch();
+        bool ThreadSafeSearch { get; }
 
         /// <returns>The eligible elements key</returns>
         HashSet<uint> Search();

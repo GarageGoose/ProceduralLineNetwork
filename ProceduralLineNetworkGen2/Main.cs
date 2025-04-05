@@ -38,19 +38,29 @@ namespace GarageGoose.ProceduralLineNetwork
             foreach (ILineNetworkModification Component in UsedComponents)
             {
                 Tracker.NotifyObservers(UpdateType.ModificationComponentStart, Component);
-                InheritComponentAccess(Component);
+                InheritLineNetworkAccess(Component);
                 bool OperationSuccess = Component.ExecuteModification(SelectedElements);
                 Tracker.NotifyObservers(UpdateType.ModificationComponentFinished, OperationSuccess);
             }
             Tracker.NotifyObservers(UpdateType.ModificationFinished);
         }
 
-        public void InheritComponentAccess(Object Component)
+        public void InheritLineNetworkAccess(Object Component)
         {
             if(Component is ILineNetworkInherit)
             {
                 ILineNetworkInherit ComponentAsILineNetworkInherit = (ILineNetworkInherit)Component;
-                ComponentAsILineNetworkInherit.Inherit(this);
+                ComponentAsILineNetworkInherit.lineNetwork = this;
+            }
+            if (Component is ILineNetworkDatabaseInherit)
+            {
+                ILineNetworkDatabaseInherit ComponentAsILineNetworkDatabaseInherit = (ILineNetworkDatabaseInherit)Component;
+                ComponentAsILineNetworkDatabaseInherit.elementsDatabase = Database;
+            }
+            if(Component is ILineNetworkTrackerInherit)
+            {
+                ILineNetworkTrackerInherit ComponentAsILineNetworkTrackerInherit = (ILineNetworkTrackerInherit)Component;
+                ComponentAsILineNetworkTrackerInherit.trackerManager = Tracker;
             }
         }
     }

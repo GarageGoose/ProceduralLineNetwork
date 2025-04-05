@@ -1,47 +1,64 @@
 using GarageGoose.ProceduralLineNetwork.Component.Interface;
-using GarageGoose.ProceduralLineNetwork.Elements;
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     /// <summary>
     /// Tracks the connected lines on a point. Use TrackPointAngles if angular information is needed and connected lines on a point.
     /// </summary>
 
-    class TrackPointPositionQuadTree : ILineNetworkInherit, ILineNetworkObserver, ILineNetworkElementSearch
+    class TrackPointPositionQuadTree : ILineNetworkDatabaseInherit, ILineNetworkObserver, ILineNetworkElementSearch
     {
-        private LineNetwork LN = new(false);
-        void ILineNetworkInherit.Inherit(LineNetwork LineNetwork) { LN = LineNetwork; }
+        ElementsDatabase? ILineNetworkDatabaseInherit.elementsDatabase { get; set; }
+        bool ILineNetworkObserver.ThreadSafeDataAccess { get; } = true;
+        bool ILineNetworkElementSearch.ThreadSafeSearch { get; } = true;
+        UpdateType[] ILineNetworkObserver.SubscribeToEvents { get; } =
+        [
+            UpdateType.OnPointAddition, UpdateType.OnPointModificationBefore,
+            UpdateType.OnPointModificationAfter, UpdateType.OnPointRemoval,
+            UpdateType.RefreshData
+        ];
 
-        UpdateType[] ILineNetworkObserver.SubscribeToEvents()
-        {
-            return
-            [
-                UpdateType.OnPointAddition, UpdateType.OnPointModificationBefore,
-                UpdateType.OnPointModificationAfter, UpdateType.OnPointRemoval,
-                UpdateType.RefreshData
-            ];
-        }
-        bool ILineNetworkObserver.ThreadSafeDataAccess() { return true; }
         void ILineNetworkObserver.LineNetworkChange(UpdateType UpdateType, object? Data)
         {
+            switch(UpdateType)
+            {
+                case UpdateType.OnPointAddition:
 
+                    break;
+
+                case UpdateType.OnPointModificationBefore: 
+                    
+                    break;
+
+                case UpdateType.OnPointModificationAfter: 
+                    
+                    break;
+
+                case UpdateType.OnPointRemoval: 
+                    
+                    break;
+
+                case UpdateType.RefreshData:
+
+                    break;
+            }
         }
 
-        bool ILineNetworkElementSearch.ThreadSafeSearch() { return true; }
-        HashSet<uint> ILineNetworkElementSearch.Search()
+
+        public HashSet<uint> Search()
         {
             return new();
         }
     }
 
-    class TrackLinesOnPoint : ILineNetworkInherit, ILineNetworkObserver, ILineNetworkElementSearch
+    class TrackLinesOnPoint : ILineNetworkDatabaseInherit, ILineNetworkObserver, ILineNetworkElementSearch
     {
-        private LineNetwork LN = new(false);
-        void ILineNetworkInherit.Inherit(LineNetwork LineNetwork) { LN = LineNetwork; }
+        public ElementsDatabase? elementsDatabase { get; set; }
+        public bool ThreadSafeDataAccess { get; } = true;
+        public bool ThreadSafeSearch { get; } = true;
 
         public Dictionary<uint, SortedList<float, Angle?>> LinesOnPoint = new();
-        public SortedDictionary<uint, float>? InternalMaxAngles;
-        public SortedDictionary<uint, float>? InternalMinAngles;
-     
+        public SortedDictionary<uint, float>? MaxAngles;
+        public SortedDictionary<uint, float>? MinAngles;
 
         public class Angle
         {
@@ -54,26 +71,23 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             public float AngleBetweenLines;
         }
 
-
+        public readonly bool trackAngles;
+        public readonly bool trackMaxAngle;
+        public readonly bool trackMinAngle;
 
         public TrackLinesOnPoint(bool TrackAngles, bool TrackMaxAngle, bool TrackMinAngle)
         {
 
         }
-
-        bool ILineNetworkObserver.ThreadSafeDataAccess() { return true; }
         
 
-        UpdateType[] ILineNetworkObserver.SubscribeToEvents()
-        {
-            return
-            [
-                UpdateType.OnLineAddition, UpdateType.OnLineModificationBefore,
-                UpdateType.OnLineModificationAfter, UpdateType.OnLineRemoval,
-                UpdateType.RefreshData
-            ];
-        }
 
+        UpdateType[] ILineNetworkObserver.SubscribeToEvents { get; } =
+        [
+            UpdateType.OnLineAddition, UpdateType.OnLineModificationBefore,
+            UpdateType.OnLineModificationAfter, UpdateType.OnLineRemoval,
+            UpdateType.RefreshData
+        ];
         void ILineNetworkObserver.LineNetworkChange(UpdateType UpdateType, object? Data)
         {
             switch (UpdateType)
@@ -100,7 +114,6 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             }
         }
 
-        bool ILineNetworkElementSearch.ThreadSafeSearch() { return true; }
         HashSet<uint> ILineNetworkElementSearch.Search()
         {
             return new();
@@ -108,9 +121,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     }
     class TrackModificationChanges
     {
-        public List<uint, Point?> Before = new(); 
+        
     }
-    class TrackAndModifyCustomIdentifier : ILineNetworkInherit, ILineNetworkObserver, ILineNetworkElementSearch, ILineNetworkModification
+    class TrackAndModifyCustomIdentifier
     {
 
     }
