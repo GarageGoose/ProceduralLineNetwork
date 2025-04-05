@@ -12,56 +12,30 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <summary>
         /// Handles tracking changes and documenting the database further using additional components. This creates more comprehensive data that modification components can work out on.
         /// </summary>
-        public readonly TrackerManager Tracker;
+        public readonly ObserverManager Observer;
 
-        public LineNetwork(bool MultithreadObservers)
-        {
-            Tracker = new(this, MultithreadObservers);
-            Database = new(Tracker, this);
-        }
+        /// <summary>
+        /// Search for eligible elements determined by specified components.
+        /// </summary>
+        public readonly SearcherManager Searcher;
 
         /// <summary>
         /// Generates unique keys for elements (Points and Lines). Used for identification.
         /// </summary>
-        private uint Keys = 0;
-        public uint NewKey()
-        {
-            return Keys++;
-        }
+        public readonly ElementKeyGenerator KeyGenerator;
 
         /// <summary>
         /// Handles the modification of the line network.
         /// </summary>
-        public void ExecuteModification(ILineNetworkModification[] UsedComponents, HashSet<uint> SelectedElements)
-        {
-            Tracker.NotifyObservers(UpdateType.ModificationStart);
-            foreach (ILineNetworkModification Component in UsedComponents)
-            {
-                Tracker.NotifyObservers(UpdateType.ModificationComponentStart, Component);
-                InheritLineNetworkAccess(Component);
-                bool OperationSuccess = Component.ExecuteModification(SelectedElements);
-                Tracker.NotifyObservers(UpdateType.ModificationComponentFinished, OperationSuccess);
-            }
-            Tracker.NotifyObservers(UpdateType.ModificationFinished);
-        }
+        public readonly ModificationManager Modification;
 
-        public void InheritLineNetworkAccess(Object Component)
+        public LineNetwork(bool MultithreadObservers, bool MultithreadSearching)
         {
-            if(Component is ILineNetworkInherit)
-            {
-                ILineNetworkInherit ComponentAsILineNetworkInherit = (ILineNetworkInherit)Component;
-                ComponentAsILineNetworkInherit.lineNetwork = this;
-            }
-            if (Component is ILineNetworkDatabaseInherit)
-            {
-                ILineNetworkDatabaseInherit ComponentAsILineNetworkDatabaseInherit = (ILineNetworkDatabaseInherit)Component;
-                ComponentAsILineNetworkDatabaseInherit.elementsDatabase = Database;
-            }
-            if(Component is ILineNetworkTrackerInherit)
-            {
-                ILineNetworkTrackerInherit ComponentAsILineNetworkTrackerInherit = (ILineNetworkTrackerInherit)Component;
-                ComponentAsILineNetworkTrackerInherit.trackerManager = Tracker;
-            }
+            Observer = new(this, MultithreadObservers);
+            KeyGenerator = new();
+            Database = new(Observer, KeyGenerator);
+            Modification = new(Observer);
+            Searcher = new(MultithreadSearching);
         }
     }
 }

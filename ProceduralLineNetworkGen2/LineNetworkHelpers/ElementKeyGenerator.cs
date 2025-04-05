@@ -4,9 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork
 {
-    internal class ElementKeyGenerator
+    public class ElementKeyGenerator
     {
+        private uint Keys = 0;
+        public uint GenerateKey()
+        {
+            return Keys++;
+        }
     }
 }

@@ -1,12 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
+using System;
 
-namespace ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork
 {
-    internal class ModificationManager
+    public class ModificationManager
     {
+        private readonly ObserverManager observer;
+
+        public ModificationManager(ObserverManager observer)
+        {
+            this.observer = observer;
+        }
+
+        public void ExecuteModification(ILineNetworkModification[] UsedComponents, HashSet<uint> SelectedElements)
+        {
+            observer.NotifyObservers(UpdateType.ModificationStart);
+            foreach (ILineNetworkModification Component in UsedComponents)
+            {
+                observer.NotifyObservers(UpdateType.ModificationComponentStart, Component);
+                bool OperationSuccess = Component.ExecuteModification(SelectedElements);
+                observer.NotifyObservers(UpdateType.ModificationComponentFinished, OperationSuccess);
+            }
+            observer.NotifyObservers(UpdateType.ModificationFinished);
+        }
     }
 }
