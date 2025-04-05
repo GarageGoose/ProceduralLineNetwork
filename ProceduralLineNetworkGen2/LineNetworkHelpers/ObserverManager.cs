@@ -13,15 +13,19 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         public readonly ObservableCollection<ILineNetworkObserver> ObserverComponents = new();
 
+        //Tracks update subscriptions of observer compnents so that only subscribers of
+        //an specific update type is informed which eliminates unnecessary calls
+        private readonly Dictionary<UpdateType, HashSet<ILineNetworkObserver>> SpecificUpdateListener = new();
+
         public TrackerManager(LineNetwork LineNetwork, bool MultithreadObservers)
         {
             this.LineNetwork = LineNetwork;
             ObserverComponents.CollectionChanged += ObserverComponentSetup;
-        }
+            foreach (UpdateType updateType in UpdateType)
+            {
 
-        //Tracks update subscriptions of observer compnents so that only subscribers of
-        //an specific update type is informed which eliminates unnecessary calls
-        private readonly Dictionary<UpdateType, HashSet<ILineNetworkObserver>> SpecificUpdateListener = new();
+            }
+        }
 
         private void ObserverComponentSetup(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
