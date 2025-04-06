@@ -21,6 +21,10 @@ namespace GarageGoose.ProceduralLineNetwork
         {
             this.LineNetwork = LineNetwork;
             ObserverComponents.CollectionChanged += ObserverComponentSetup;
+            foreach(UpdateType Type in Enum.GetValues(typeof(UpdateType)))
+            {
+                SpecificUpdateListener.Add(Type, new());
+            }
         }
 
         private void ObserverComponentSetup(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

@@ -4,7 +4,8 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
 {
     public class Point
     {
-        public Vector2 Location;
+        public float x;
+        public float y;
     }
 
     public class Line

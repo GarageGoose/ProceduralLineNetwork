@@ -21,6 +21,15 @@ namespace GarageGoose.ProceduralLineNetwork
             return Type.Unknown;
         }
 
+        public Point LinePoint1(uint lineKey)
+        {
+            return Points[Lines[lineKey].PointKey1];
+        }
+        public Point LinePoint2(uint lineKey)
+        {
+            return Points[Lines[lineKey].PointKey2];
+        }
+
         /// <summary>
         /// Ignore this, only used internally. Custom dictionary is used to track addition, removal, and modification of an element
         /// </summary>

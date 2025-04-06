@@ -1,5 +1,4 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
-using System;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
