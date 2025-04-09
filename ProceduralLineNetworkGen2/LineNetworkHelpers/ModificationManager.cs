@@ -1,6 +1,6 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 
-namespace GarageGoose.ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork.Manager
 {
     public class ModificationManager
     {
@@ -13,14 +13,14 @@ namespace GarageGoose.ProceduralLineNetwork
 
         public void ExecuteModification(ILineNetworkModification[] UsedComponents, HashSet<uint> SelectedElements)
         {
-            observer.NotifyObservers(UpdateType.ModificationStart);
+            observer.NotifyObservers(ElementUpdateType.ModificationStart);
             foreach (ILineNetworkModification Component in UsedComponents)
             {
-                observer.NotifyObservers(UpdateType.ModificationComponentStart, Component);
+                observer.NotifyObservers(ElementUpdateType.ModificationComponentStart, Component);
                 bool OperationSuccess = Component.ExecuteModification(SelectedElements);
-                observer.NotifyObservers(UpdateType.ModificationComponentFinished, OperationSuccess);
+                observer.NotifyObservers(ElementUpdateType.ModificationComponentFinished, OperationSuccess);
             }
-            observer.NotifyObservers(UpdateType.ModificationFinished);
+            observer.NotifyObservers(ElementUpdateType.ModificationFinished);
         }
     }
 }

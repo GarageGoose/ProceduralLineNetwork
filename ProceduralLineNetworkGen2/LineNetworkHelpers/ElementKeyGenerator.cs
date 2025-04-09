@@ -1,10 +1,11 @@
-﻿using System;
+﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GarageGoose.ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork.Manager
 {
     public class ElementKeyGenerator
     {

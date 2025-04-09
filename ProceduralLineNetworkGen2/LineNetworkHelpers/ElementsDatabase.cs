@@ -1,112 +1,198 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
+using System.Collections;
 
-namespace GarageGoose.ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork.Manager
 {
     public class ElementsDatabase
     {
-        public readonly ElementDict<Point> Points;
-        public readonly ElementDict<Line> Lines;
+        public readonly PointDict points;
+        public readonly LineDict lines;
+        public readonly LinesOnPoint linesOnPoint = new();
 
-        public ElementsDatabase(ObserverManager Observer, ElementKeyGenerator keyGenerator)
+        public ElementsDatabase(ObserverManager observer)
         {
-            Points = new(Observer, keyGenerator, Type.Point);
-            Lines = new(Observer, keyGenerator, Type.Line);
+            lines = linesOnPoint.NewLineDict(observer);
+            points = linesOnPoint.NewPointDict(observer, lines);
         }
 
         public Type CheckElementType(uint Key)
         {
-            if (Points.ContainsKey(Key)) return Type.Point;
-            if (Lines.ContainsKey(Key)) return Type.Line;
+            if (points.ContainsKey(Key)) return Type.Point;
+            if (lines.ContainsKey(Key)) return Type.Line;
             return Type.Unknown;
         }
 
         public Point LinePoint1(uint lineKey)
         {
-            return Points[Lines[lineKey].PointKey1];
+            return points[lines[lineKey].PointKey1];
         }
         public Point LinePoint2(uint lineKey)
         {
-            return Points[Lines[lineKey].PointKey2];
-        }
-
-        /// <summary>
-        /// Ignore this, only used internally. Custom dictionary is used to track addition, removal, and modification of an element
-        /// </summary>
-        public class ElementDict<TElement> : Dictionary<uint, TElement>
-        {
-            ObserverManager Observer;
-            ElementKeyGenerator keyGenerator;
-
-            private readonly UpdateType Addition;
-            private readonly UpdateType ModificationBefore;
-            private readonly UpdateType ModificationAfter;
-            private readonly UpdateType Removal;
-
-            public ElementDict(ObserverManager Observer, ElementKeyGenerator keyGenerator, Type ElementType)
-            {
-                this.Observer = Observer;
-                this.keyGenerator = keyGenerator;
-
-                Addition = (ElementType == Type.Point) ? UpdateType.OnPointAddition : UpdateType.OnLineAddition;
-                ModificationBefore = (ElementType == Type.Point) ? UpdateType.OnPointModificationBefore : UpdateType.OnLineModificationBefore;
-                ModificationAfter = (ElementType == Type.Point) ? UpdateType.OnPointModificationAfter : UpdateType.OnLineModificationAfter;
-                Removal = (ElementType == Type.Point) ? UpdateType.OnPointRemoval : UpdateType.OnLineRemoval;
-            }
-            public uint AddAuto(TElement NewElement)
-            {
-                uint Key = keyGenerator.GenerateKey();
-                base.Add(Key, NewElement);
-                ElementAddition(Key);
-                return Key;
-            }
-            public new void Add(uint Key, TElement NewElement)
-            {
-                base.Add(Key, NewElement);
-                ElementAddition(Key);
-            }
-            public new bool TryAdd(uint Key, TElement NewElement)
-            {
-                bool Success = base.TryAdd(Key, NewElement);
-                if (Success)
-                {
-                    ElementAddition(Key);
-                }
-                return Success;
-            }
-            public new void Remove(uint Key)
-            {
-                ElementRemoval(Key);
-                base.Remove(Key);
-            }
-            public new void Remove(uint Key, out TElement? Element)
-            {
-                ElementRemoval(Key);
-                base.Remove(Key, out Element);
-            }
-
-            public new TElement this[uint Key]
-            {
-                get => base[Key];
-                set
-                {
-                    Observer.NotifyObservers(ModificationBefore, Key);
-                    base[Key] = value;
-                    Observer.NotifyObservers(ModificationAfter, Key);
-                }
-            }
-            private void ElementAddition(uint Key)
-            {
-                Observer.NotifyObservers(Addition, Key);
-            }
-            private void ElementRemoval(uint Key)
-            {
-                Observer.NotifyObservers(Removal, Key);
-            }
+            return points[lines[lineKey].PointKey2];
         }
         public enum Type
         {
             Point, Line, Unknown
+        }
+
+        public class BaseElementDict<TElement> : IDictionary<uint, TElement>
+        {
+            ObserverManager observer;
+
+            private readonly ElementUpdateType addition;
+            private readonly ElementUpdateType modification;
+            private readonly ElementUpdateType removal;
+
+            public BaseElementDict(ObserverManager observer, ElementUpdateType addition, ElementUpdateType modification, ElementUpdateType removal)
+            {
+                this.observer = observer;
+                this.addition = addition;
+                this.modification = modification;
+                this.removal = removal;
+            }
+
+            private readonly Dictionary<uint, TElement> internalDict = new();
+
+            //Cannot modify dictionary
+            public bool IsReadOnly => false;
+            public int Count => internalDict.Count;
+            public ICollection<uint> Keys => internalDict.Keys;
+            public ICollection<TElement> Values => internalDict.Values;
+            public bool TryGetValue(uint key, out TElement element) => internalDict.TryGetValue(key, out element);
+            public bool Contains(KeyValuePair<uint, TElement> item) => internalDict.Contains(item);
+            public bool ContainsKey(uint key) => internalDict.ContainsKey(key);
+            public void CopyTo(KeyValuePair<uint, TElement>[] item, int index) => ((IDictionary<uint, TElement>)internalDict).CopyTo(item, index);
+            public IEnumerator<KeyValuePair<uint, TElement>> GetEnumerator() => internalDict.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            //Can modify dictionary by item addition
+            public void Add(uint Key, TElement value)
+            {
+                internalDict.Add(Key, value);
+                observer.ElementUpdateNotifyObservers(addition, Key);
+            }
+            void ICollection<KeyValuePair<uint, TElement>>.Add(KeyValuePair<uint, TElement> item)
+            {
+                Add(item.Key, item.Value);
+            }
+
+            //Can modify dictionary by item mutation
+            public TElement this[uint key]
+            {
+                get => internalDict[key];
+                set
+                {
+                    TElement BeforeModification = internalDict[key];
+                    internalDict[key] = value;
+                    object[] additionalInfo = { key, BeforeModification!, value! };
+                    observer.ElementUpdateNotifyObservers(modification, additionalInfo);
+                }
+            }
+
+            //Can modify dictionary by item removal
+            public bool Remove(uint key)
+            {
+                observer.ElementUpdateNotifyObservers(removal, key);
+                return internalDict.Remove(key);
+            }
+            bool ICollection<KeyValuePair<uint, TElement>>.Remove(KeyValuePair<uint, TElement> item)
+            {
+                return Remove(item.Key);
+            }
+            public void Clear()
+            {
+                observer.NotifyObservers(ElementUpdateType.ClearData);
+                internalDict.Clear();
+            }
+        }
+        public class PointDict : BaseElementDict<Point>
+        {
+            readonly LineDict lineDict;
+            readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
+
+            public PointDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint, LineDict lineDict) : base(observer, ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval)
+            {
+                this.lineDict = lineDict;
+                this.internalLinesOnPoint = internalLinesOnPoint;
+            }
+
+            public new void Add(uint key, Point point)
+            {
+                base.Add(key, point);
+                internalLinesOnPoint.Add(key, new());
+            }
+
+            public new void Remove(uint key)
+            {
+                foreach(uint affectedLineKeys in internalLinesOnPoint[key])
+                {
+                    lineDict.Remove(affectedLineKeys);
+                }
+                internalLinesOnPoint.Remove(key);
+                base.Remove(key);
+            }
+
+            public new void Clear()
+            {
+                lineDict.Clear();
+                internalLinesOnPoint.Clear();
+                base.Clear();
+            }
+        }
+        public class LineDict : BaseElementDict<Line>
+        {
+            private readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
+            public LineDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint) : base(observer, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval)
+            {
+                this.internalLinesOnPoint = internalLinesOnPoint;
+            }
+
+            public new void Add(uint key, Line line)
+            {
+                base.Add(key, line);
+                internalLinesOnPoint[line.PointKey1].Add(key);
+                internalLinesOnPoint[line.PointKey2].Add(key);
+            }
+
+            public new void Remove(uint key)
+            {
+                internalLinesOnPoint[key].Remove(base[key].PointKey1);
+                internalLinesOnPoint[key].Remove(base[key].PointKey2);
+                base.Remove(key);
+            }
+            public new void Clear()
+            {
+                foreach(uint key in internalLinesOnPoint.Keys) internalLinesOnPoint[key].Clear();
+                base.Clear();
+            }
+            public new Line this[uint key]
+            {
+                get => base[key];
+                set
+                {
+                    Line oldVer = base[key];
+                    base[key] = value;
+                    if(oldVer.PointKey1 != base[key].PointKey1)
+                    {
+                        internalLinesOnPoint[oldVer.PointKey1].Remove(key);
+                        internalLinesOnPoint[base[key].PointKey1].Add(key);
+                    }
+                    if (oldVer.PointKey2 != base[key].PointKey2)
+                    {
+                        internalLinesOnPoint[oldVer.PointKey2].Remove(key);
+                        internalLinesOnPoint[base[key].PointKey2].Add(key);
+                    }
+                }
+            }
+        }
+        public class LinesOnPoint
+        {
+            public IReadOnlyDictionary<uint, HashSet<uint>> linesOnPoint;
+            private readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
+            public LinesOnPoint() => linesOnPoint = internalLinesOnPoint = new();
+            public PointDict NewPointDict(ObserverManager observer, LineDict lineDict) => new(observer, internalLinesOnPoint, lineDict);
+            public LineDict NewLineDict(ObserverManager observer) => new(observer, internalLinesOnPoint);
         }
     }
 }

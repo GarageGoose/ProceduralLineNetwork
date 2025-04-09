@@ -1,4 +1,4 @@
-using GarageGoose.ProceduralLineNetwork.Component.Interface;
+using GarageGoose.ProceduralLineNetwork.Manager;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
@@ -33,7 +33,7 @@ namespace GarageGoose.ProceduralLineNetwork
         {
             Observer = new(this, MultithreadObservers);
             KeyGenerator = new();
-            Database = new(Observer, KeyGenerator);
+            Database = new(Observer);
             Modification = new(Observer);
             Searcher = new(MultithreadSearching);
         }

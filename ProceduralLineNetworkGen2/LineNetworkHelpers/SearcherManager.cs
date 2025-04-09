@@ -1,6 +1,6 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 
-namespace GarageGoose.ProceduralLineNetwork
+namespace GarageGoose.ProceduralLineNetwork.Manager
 {
     public class SearcherManager
     {
