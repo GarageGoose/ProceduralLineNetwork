@@ -33,8 +33,6 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             ElementUpdateType.OnPointAddition,
             ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval,
-
-            ElementUpdateType.RefreshData
         ];
         void ILineNetworkObserverElement.LineNetworkElementUpdate(ElementUpdateType UpdateType, object? Data)
         {
