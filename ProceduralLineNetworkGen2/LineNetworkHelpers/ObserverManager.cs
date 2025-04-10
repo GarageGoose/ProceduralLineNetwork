@@ -4,6 +4,9 @@ using System.Collections.ObjectModel;
 
 namespace GarageGoose.ProceduralLineNetwork.Manager
 {
+    /// <summary>
+    /// This class handles 
+    /// </summary>
     public class ObserverManager
     {
         private LineNetwork LineNetwork;
@@ -15,7 +18,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         //Tracks update subscriptions of observer compnents so that only subscribers of
         //an specific update type is informed which eliminates unnecessary calls
-        private readonly Dictionary<ElementUpdateType, HashSet<ILineNetworkObserverElement>> SpecificElementUpdateListener = new();
+        private readonly Dictionary<ElementUpdateType, HashSet<ILineNetworkObserverElementSubscribe>> SpecificElementUpdateListener = new();
         private readonly Dictionary<ComponentActionUpdate, HashSet<ILineNetworkObserverComponentAction>> SpecificComponentActionUpdateListener = new();
 
         public ObserverManager(LineNetwork LineNetwork, bool MultithreadObservers)
@@ -35,12 +38,12 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             {
                 foreach (object Observer in e.NewItems)
                 {
-                    if(Observer is ILineNetworkObserverElement)
+                    if(Observer is ILineNetworkObserverElementSubscribe)
                     {
-                        foreach (ElementUpdateType UpdateSubscription in ((ILineNetworkObserverElement)Observer).observerElementSubscribeToEvents)
+                        foreach (ElementUpdateType UpdateSubscription in ((ILineNetworkObserverElementSubscribe)Observer).observerElementSubscribeToEvents)
                         {
                             SpecificElementUpdateListener.TryAdd(UpdateSubscription, new());
-                            SpecificElementUpdateListener[UpdateSubscription].Add((ILineNetworkObserverElement)Observer);
+                            SpecificElementUpdateListener[UpdateSubscription].Add((ILineNetworkObserverElementSubscribe)Observer);
                         }
                     }
                     else if(Observer is ILineNetworkObserverComponentAction)
@@ -59,11 +62,11 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             {
                 foreach (object Observer in e.OldItems)
                 {
-                    if(Observer is ILineNetworkObserverElement)
+                    if(Observer is ILineNetworkObserverElementSubscribe)
                     {
-                        foreach (ElementUpdateType UpdateSubscription in ((ILineNetworkObserverElement)Observer).observerElementSubscribeToEvents)
+                        foreach (ElementUpdateType UpdateSubscription in ((ILineNetworkObserverElementSubscribe)Observer).observerElementSubscribeToEvents)
                         {
-                            SpecificElementUpdateListener[UpdateSubscription].Remove((ILineNetworkObserverElement)Observer);
+                            SpecificElementUpdateListener[UpdateSubscription].Remove((ILineNetworkObserverElementSubscribe)Observer);
                         }
                     }
                     else if (Observer is ILineNetworkObserverComponentAction)
@@ -82,23 +85,46 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         /// Use with caution (Can easily mess data tracking)! Notifies observers when an element update happned
         /// </summary>
         /// <param name="AdditionalInfo">Additional information associated with the update (Check Componentinterface.Updatetype for more info)</param>
-        public void ElementUpdateNotifyObservers(ElementUpdateType UpdateType, Object? AdditionalInfo = null)
+        public void ElementAddOrRemoveNotifyObservers(ElementUpdateType UpdateType, uint key)
         {
-            foreach (ILineNetworkObserverElement Observer in SpecificElementUpdateListener[UpdateType])
+            foreach (ILineNetworkObserverElementSubscribe Observer in SpecificElementUpdateListener[UpdateType])
             {
-                Observer.LineNetworkElementUpdate(UpdateType, Observer);
+                ObserverActionNotifyObservers(Observer, ComponentAction.Start);
+                ((ILineNetworkObserverElementAddedOrRemoved)Observer).LineNetworkElementAddedOrRemoved(UpdateType, key);
+                ObserverActionNotifyObservers(Observer, ComponentAction.Finished);
+            }
+        }
+        public void ElementModificationNotifyObservers(ElementUpdateType UpdateType, uint key, object OldElement, object NewElement)
+        {
+            foreach (ILineNetworkObserverElementSubscribe Observer in SpecificElementUpdateListener[UpdateType])
+            {
+                ObserverActionNotifyObservers(Observer, ComponentAction.Start);
+                ((ILineNetworkObserverElementClear)Observer).LineNetworkElementClear(UpdateType);
+                ObserverActionNotifyObservers(Observer, ComponentAction.Finished);
+            }
+        }
+        public void ElementClearNotifyObservers(ElementUpdateType UpdateType)
+        {
+            foreach (ILineNetworkObserverElementSubscribe Observer in SpecificElementUpdateListener[UpdateType])
+            {
+                ObserverActionNotifyObservers(Observer, ComponentAction.Start);
+                ((ILineNetworkObserverElementClear)Observer).LineNetworkElementClear(UpdateType);
+                ObserverActionNotifyObservers(Observer, ComponentAction.Finished);
             }
         }
 
         /// <summary>
         /// Use with caution (Can easily mess data tracking)! Notifies observers when an external component is used
         /// </summary>
-        public void ObserverActionNotifyObservers(ComponentActionUpdate UpdateType)
+        public void ObserverActionNotifyObservers(object Component, ComponentAction Action)
         {
-            if (!SpecificComponentActionUpdateListener.ContainsKey(UpdateType)) return;
-            foreach(ILineNetworkObserverComponentAction Observer in SpecificComponentActionUpdateListener[UpdateType])
+            ComponentActionUpdate componentActionUpdate = new(Component.GetType(), Action);
+            if (!SpecificComponentActionUpdateListener.ContainsKey(componentActionUpdate)) return;
+            foreach(ILineNetworkObserverComponentAction Observer in SpecificComponentActionUpdateListener[componentActionUpdate])
             {
-                Observer.LineNetworkComponentUpdate(UpdateType);
+                ObserverActionNotifyObservers(Component, ComponentAction.Start);
+                Observer.LineNetworkComponentUpdate(Component, Action);
+                ObserverActionNotifyObservers(Component, ComponentAction.Finished);
             }
         }
     }

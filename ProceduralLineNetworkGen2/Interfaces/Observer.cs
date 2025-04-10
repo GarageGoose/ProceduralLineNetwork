@@ -4,14 +4,23 @@
     /// <summary>
     /// Observe changes on the line network. 
     /// </summary>
-    public interface ILineNetworkObserverElement
+    public interface ILineNetworkObserverElementSubscribe
     {
         /// <returns>Types of events to track</returns>
         ElementUpdateType[] observerElementSubscribeToEvents { get; }
+    }
 
-        /// <param name="UpdateType">Type of event that happened</param>
-        /// <param name="Data">Data associated with the event (Look to TrackingUpdateType for more info)</param>
-        void LineNetworkElementUpdate(ElementUpdateType UpdateType, Object? Data);
+    public interface ILineNetworkObserverElementAddedOrRemoved
+    {
+        void LineNetworkElementAddedOrRemoved(ElementUpdateType UpdateType, uint Key);
+    }
+    public interface ILineNetworkObserverElementModified
+    {
+        void LineNetworkElementModified(ElementUpdateType UpdateType, uint Key, object OldElement, object NewElement);
+    }
+    public interface ILineNetworkObserverElementClear
+    {
+        void LineNetworkElementClear(ElementUpdateType UpdateType);
     }
 
     public enum ElementUpdateType
@@ -30,7 +39,7 @@
     public interface ILineNetworkObserverComponentAction
     {
         ComponentActionUpdate[] observerComponentActionSubscribeToEvents { get; }
-        void LineNetworkComponentUpdate(ComponentActionUpdate Update);
+        void LineNetworkComponentUpdate(object Component, ComponentAction Action);
     }
 
     public enum ComponentAction

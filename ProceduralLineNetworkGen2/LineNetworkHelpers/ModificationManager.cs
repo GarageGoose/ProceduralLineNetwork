@@ -13,14 +13,12 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         public void ExecuteModification(ILineNetworkModification[] UsedComponents, HashSet<uint> SelectedElements)
         {
-            observer.NotifyObservers(ElementUpdateType.ModificationStart);
             foreach (ILineNetworkModification Component in UsedComponents)
             {
-                observer.NotifyObservers(ElementUpdateType.ModificationComponentStart, Component);
+                observer.ObserverActionNotifyObservers(Component, ComponentAction.Start);
                 bool OperationSuccess = Component.ExecuteModification(SelectedElements);
-                observer.NotifyObservers(ElementUpdateType.ModificationComponentFinished, OperationSuccess);
+                observer.ObserverActionNotifyObservers(Component, ComponentAction.Finished);
             }
-            observer.NotifyObservers(ElementUpdateType.ModificationFinished);
         }
     }
 }

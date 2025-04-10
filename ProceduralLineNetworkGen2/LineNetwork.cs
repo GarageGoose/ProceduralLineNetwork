@@ -35,7 +35,7 @@ namespace GarageGoose.ProceduralLineNetwork
             KeyGenerator = new();
             Database = new(Observer);
             Modification = new(Observer);
-            Searcher = new(MultithreadSearching);
+            Searcher = new(MultithreadSearching, Observer);
         }
     }
 }

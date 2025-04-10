@@ -72,7 +72,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             public void Add(uint Key, TElement value)
             {
                 internalDict.Add(Key, value);
-                observer.ElementUpdateNotifyObservers(addition, Key);
+                observer.ElementAddOrRemoveNotifyObservers(addition, Key);
             }
             void ICollection<KeyValuePair<uint, TElement>>.Add(KeyValuePair<uint, TElement> item)
             {
@@ -87,15 +87,14 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 {
                     TElement BeforeModification = internalDict[key];
                     internalDict[key] = value;
-                    object[] additionalInfo = { key, BeforeModification!, value! };
-                    observer.ElementUpdateNotifyObservers(modification, additionalInfo);
+                    observer.ElementModificationNotifyObservers(modification, key, BeforeModification!, value!);
                 }
             }
 
             //Can modify dictionary by item removal
             public bool Remove(uint key)
             {
-                observer.ElementUpdateNotifyObservers(removal, key);
+                observer.ElementAddOrRemoveNotifyObservers(removal, key);
                 return internalDict.Remove(key);
             }
             bool ICollection<KeyValuePair<uint, TElement>>.Remove(KeyValuePair<uint, TElement> item)
@@ -104,7 +103,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             }
             public void Clear()
             {
-                observer.ElementUpdateNotifyObservers(clear);
+                observer.ElementClearNotifyObservers(clear);
                 internalDict.Clear();
             }
         }
@@ -191,6 +190,10 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         public class LinesOnPoint
         {
             public IReadOnlyDictionary<uint, HashSet<uint>> linesOnPoint;
+
+            /// <summary>
+            /// Key is point key, value is a hash set of lines connected to it
+            /// </summary>
             private readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
             public LinesOnPoint() => linesOnPoint = internalLinesOnPoint = new();
             public PointDict NewPointDict(ObserverManager observer, LineDict lineDict) => new(observer, internalLinesOnPoint, lineDict);

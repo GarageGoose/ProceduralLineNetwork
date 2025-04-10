@@ -5,9 +5,11 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     public class SearcherManager
     {
         public readonly bool Multithread;
-        public SearcherManager(bool Multithread)
+        private ObserverManager observer;
+        public SearcherManager(bool Multithread, ObserverManager observer)
         {
             this.Multithread = Multithread;
+            this.observer = observer;
         }
         /// <summary>
         /// Search for eligible elements determined by specified components.
@@ -25,7 +27,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 List<HashSet<uint>> EligibleElementsByComponent = new();
                 foreach (ILineNetworkElementSearch Component in Components)
                 {
+                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Start);
                     EligibleElementsByComponent.Add(Component.Search());
+                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Finished);
                 }
 
                 //Sort the HashSets (eligible elements by components) from least count to most count to
@@ -33,7 +37,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 EligibleElementsByComponent.Sort(Comparer<HashSet<uint>>.Create((a, b) => a.Count.CompareTo(b.Count)));
 
 
-                //Intersect HashSets from least to most count
+                //Intersect HashSets from least to most count because of the reason above
                 EligibleElements = EligibleElementsByComponent[0];
                 for (int i = 1; i < EligibleElementsByComponent.Count; i++)
                 {
@@ -44,7 +48,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             {
                 foreach (ILineNetworkElementSearch Component in Components)
                 {
+                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Start);
                     EligibleElements.UnionWith(Component.Search());
+                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Finished);
                 }
             }
             return EligibleElements;

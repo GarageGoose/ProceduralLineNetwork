@@ -1,12 +1,27 @@
-﻿using System;
+﻿using GarageGoose.ProceduralLineNetwork.Component.Core;
+using GarageGoose.ProceduralLineNetwork.Component.Interface;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProceduralLineNetwork.CoreComponents.TrackingAndDatabase
+namespace ProceduralLineNetwork.Component.Core
 {
-    internal class TrackAngleBetweenLines
+    public class TrackAngleBetweenLines : ILineNetworkObserverComponentAction
     {
+        public ComponentActionUpdate[] observerComponentActionSubscribeToEvents { get; }
+        private TrackLineAngles trackLineAngles;
+        public TrackAngleBetweenLines(TrackLineAngles trackLineAnglesInstance)
+        {
+            trackLineAngles = trackLineAnglesInstance;
+            observerComponentActionSubscribeToEvents = [new(trackLineAnglesInstance, ComponentAction.Finished)];
+        }
+
+        void ILineNetworkObserverComponentAction.LineNetworkComponentUpdate(object Component, ComponentAction Action)
+        {
+
+        }
     }
 }

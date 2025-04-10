@@ -4,17 +4,27 @@ using GarageGoose.ProceduralLineNetwork.Manager;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
-    class TrackLineAngles : ILineNetworkObserverElement, ILineNetworkElementSearch
+    public class TrackLineAngles : ILineNetworkObserverElementSubscribe, ILineNetworkObserverElementAddedOrRemoved, ILineNetworkObserverElementModified, ILineNetworkObserverElementClear
     {
         public bool ThreadSafeDataAccess { get; } = true;
-        public bool ThreadSafeSearch { get; } = true;
 
+        //Access datas of lines and point to track
         private ElementsDatabase database;
 
+        //Separated the internal and public dictionary to avoid unwanted changes.
         private readonly Dictionary<uint, float> internalLineAngleFromPoint1 = new();
         private readonly Dictionary<uint, float> internalLineAngleFromPoint2 = new();
 
+        /// <summary>
+        /// Check line angle from the perspective of the first connected point.
+        /// Key is line key and float is angle in radian.
+        /// </summary>
         public readonly IReadOnlyDictionary<uint, float> lineAngleFromPoint1;
+
+        /// <summary>
+        /// Check line angle from the perspective of the second connected point.
+        /// Key is line key and float is angle in radian.
+        /// </summary>
         public readonly IReadOnlyDictionary<uint, float> lineAngleFromPoint2;
 
         public TrackLineAngles(ElementsDatabase database)
@@ -24,53 +34,57 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             lineAngleFromPoint2 = internalLineAngleFromPoint2;
         }
 
-
-
-        ElementUpdateType[] ILineNetworkObserverElement.observerElementSubscribeToEvents { get; } =
+        ElementUpdateType[] ILineNetworkObserverElementSubscribe.observerElementSubscribeToEvents { get; } =
         [
-            ElementUpdateType.OnLineAddition,
-            ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval,
-
-            ElementUpdateType.OnPointAddition,
-            ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval,
+            ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification,
+            ElementUpdateType.OnLineRemoval, ElementUpdateType.OnPointModification
         ];
-        void ILineNetworkObserverElement.LineNetworkElementUpdate(ElementUpdateType UpdateType, object? Data)
+
+        void ILineNetworkObserverElementModified.LineNetworkElementModified(ElementUpdateType UpdateType, uint key, object oldObject, object newObject)
         {
-            switch (UpdateType)
+            if(UpdateType == ElementUpdateType.OnLineModification)
             {
-                //
-                case ElementUpdateType.OnLineAddition:
-                    float Point1Angle = CalcAngle(database.LinePoint1((uint)Data!), database.LinePoint2((uint)Data!));
-                    internalLineAngleFromPoint1.Add((uint)Data!, Point1Angle);
+                //Store the angle from the perspective of point 1 to save performance by just inverting this angle for point 2 (as oppose to recalculating it) just incase both end on the line is changed.
+                float? angleFromPoint1New = null;
 
-                    //Invert the angle from Point1Angle to avoid expensive computation
-                    //Subtract pi if the angle is >pi else add pi to keep the angle from surpassing <0 and >2pi.
-                    internalLineAngleFromPoint2.Add((uint)Data!, (Point1Angle >= MathF.PI) ? Point1Angle - MathF.PI : Point1Angle + MathF.PI);
-                    break;
+                if (((Line)oldObject).PointKey1 != ((Line)newObject).PointKey1)
+                {
+                    internalLineAngleFromPoint1.Remove(key);
+                    angleFromPoint1New = CalcAngle(database.LinePoint1(key), database.LinePoint2(key));
+                    internalLineAngleFromPoint1.Add(key, (float)angleFromPoint1New);
+                }
 
-                case ElementUpdateType.OnLineModification:
+                if (((Line)oldObject).PointKey2 != ((Line)newObject).PointKey2)
+                {
+                    internalLineAngleFromPoint2.Remove(key);
 
-                    break;
+                    //Invert the angle if isn't null to avoid expensive computation, else recompute it from the perspective of point 2
+                    internalLineAngleFromPoint2.Add(key, (angleFromPoint1New != null) ? InvertAngle((float)angleFromPoint1New) : CalcAngle(database.LinePoint2(key), database.LinePoint1(key)));
+                }
 
-                case ElementUpdateType.OnLineRemoval:
-
-                    break;
-
-                //
-                case ElementUpdateType.OnPointModification:
-
-                    break;
-
-                //
-                case UpdateType.RefreshData:
-
-                    break;
+                return;
             }
         }
 
-        public HashSet<uint> Search()
+        void ILineNetworkObserverElementAddedOrRemoved.LineNetworkElementAddedOrRemoved(ElementUpdateType UpdateType, uint Key)
         {
-            return new();
+            if(UpdateType == ElementUpdateType.OnLineAddition)
+            {
+                float Point1Angle = CalcAngle(database.LinePoint1(Key), database.LinePoint2(Key));
+                internalLineAngleFromPoint1.Add(Key, Point1Angle);
+
+                //Invert the angle from Point1Angle to avoid expensive computation
+                internalLineAngleFromPoint2.Add(Key, InvertAngle(Point1Angle));
+                return;
+            }
+            internalLineAngleFromPoint1.Remove(Key);
+            internalLineAngleFromPoint2.Remove(Key);
+        }
+
+        void ILineNetworkObserverElementClear.LineNetworkElementClear(ElementUpdateType UpdateType)
+        {
+            internalLineAngleFromPoint1.Clear();
+            internalLineAngleFromPoint2.Clear();
         }
 
         //https://stackoverflow.com/questions/2676719/calculating-the-angle-between-a-line-and-the-x-axis
@@ -81,10 +95,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             return MathF.Atan2(diffY, diffX);
         }
 
-        private enum LinePoint
-        {
-            one, two
-        }
+        //Subtract pi if the angle is >pi else add pi to keep the angle from surpassing <0 and >2pi.
+        private float InvertAngle(float Angle) => (Angle >= MathF.PI) ? Angle - MathF.PI : Angle + MathF.PI;
     }
 
     public class TrackAngleBetweenLines

@@ -10,16 +10,16 @@ namespace ProceduralLineNetwork.CoreComponents
     /// <summary>
     /// Tracks the connected lines on a point. Use TrackPointAngles if angular information is needed and connected lines on a point.
     /// </summary>
-    class TrackPointPositionQuadTree : ILineNetworkObserverElement, ILineNetworkElementSearch
+    class TrackPointPositionQuadTree : ILineNetworkObserverElementSubscribe, ILineNetworkElementSearch
     {
         bool ILineNetworkElementSearch.ThreadSafeSearch { get; } = true;
-        ElementUpdateType[] ILineNetworkObserverElement.observerElementSubscribeToEvents { get; } =
+        ElementUpdateType[] ILineNetworkObserverElementSubscribe.observerElementSubscribeToEvents { get; } =
         [
             ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification,
             ElementUpdateType.OnPointRemoval
         ];
 
-        void ILineNetworkObserverElement.LineNetworkElementUpdate(ElementUpdateType UpdateType, object? Data)
+        void ILineNetworkObserverElementSubscribe.LineNetworkElementUpdate(ElementUpdateType UpdateType, object? Data)
         {
             switch (UpdateType)
             {
