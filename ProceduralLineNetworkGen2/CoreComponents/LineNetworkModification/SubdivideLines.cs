@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProceduralLineNetwork.CoreComponents.LineNetworkModification
 {
-    internal class SubdivideSelectedLines
+    internal class SubdivideLines
     {
     }
 }
