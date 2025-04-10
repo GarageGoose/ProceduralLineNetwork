@@ -19,12 +19,12 @@
         /// <summary>
         /// Point update (Returns the point key (uint) associated with the event in LineNetworkElementUpdate)
         /// </summary>
-        OnPointAddition, OnPointModification, OnPointRemoval,
+        OnPointAddition, OnPointModification, OnPointRemoval, OnPointClear,
 
         /// <summary>
         /// Line update (Returns the line key (uint) associated with the event in LineNetworkElementUpdate)
         /// </summary>
-        OnLineAddition, OnLineModification, OnLineRemoval
+        OnLineAddition, OnLineModification, OnLineRemoval, OnLineClear
     }
 
     public interface ILineNetworkObserverComponentAction

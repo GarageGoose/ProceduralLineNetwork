@@ -43,13 +43,15 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             private readonly ElementUpdateType addition;
             private readonly ElementUpdateType modification;
             private readonly ElementUpdateType removal;
+            private readonly ElementUpdateType clear;
 
-            public BaseElementDict(ObserverManager observer, ElementUpdateType addition, ElementUpdateType modification, ElementUpdateType removal)
+            public BaseElementDict(ObserverManager observer, ElementUpdateType addition, ElementUpdateType modification, ElementUpdateType removal, ElementUpdateType clear)
             {
                 this.observer = observer;
                 this.addition = addition;
                 this.modification = modification;
                 this.removal = removal;
+                this.clear = clear;
             }
 
             private readonly Dictionary<uint, TElement> internalDict = new();
@@ -102,7 +104,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             }
             public void Clear()
             {
-                observer.NotifyObservers(ElementUpdateType.ClearData);
+                observer.ElementUpdateNotifyObservers(clear);
                 internalDict.Clear();
             }
         }
@@ -111,7 +113,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             readonly LineDict lineDict;
             readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
 
-            public PointDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint, LineDict lineDict) : base(observer, ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval)
+            public PointDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint, LineDict lineDict) : base(observer, ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval, ElementUpdateType.OnPointClear)
             {
                 this.lineDict = lineDict;
                 this.internalLinesOnPoint = internalLinesOnPoint;
@@ -143,7 +145,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         public class LineDict : BaseElementDict<Line>
         {
             private readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
-            public LineDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint) : base(observer, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval)
+            public LineDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint) : base(observer, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnPointClear)
             {
                 this.internalLinesOnPoint = internalLinesOnPoint;
             }
