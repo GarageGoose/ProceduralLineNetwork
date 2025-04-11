@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ProceduralLineNetwork.Component.Core
 {
-    public class TrackAngleBetweenLines : ILineNetworkObserverComponentAction
+    public class TrackAngleBetweenLines : ILineNetworkObserverComponentAction, ILineNetworkObserverElementSubscribe, ILineNetworkObserverElementModified, ILineNetworkObserverElementClear, ILineNetworkObserverElementAddedOrRemoved
     {
         public ComponentActionUpdate[] observerComponentActionSubscribeToEvents { get; }
         private TrackLineAngles trackLineAngles;

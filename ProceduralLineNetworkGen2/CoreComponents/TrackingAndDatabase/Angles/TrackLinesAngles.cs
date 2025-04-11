@@ -87,7 +87,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalLineAngleFromPoint2.Clear();
         }
 
-        //https://stackoverflow.com/questions/2676719/calculating-the-angle-between-a-line-and-the-x-axis
+        //Refence: https://stackoverflow.com/questions/2676719/calculating-the-angle-between-a-line-and-the-x-axis
         private float CalcAngle(Point one, Point two)
         {
             float diffX = two.x - one.x;
