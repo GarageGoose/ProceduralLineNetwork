@@ -128,4 +128,48 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             }
         }
     }
+
+    public class ObserverComponentDatabase
+    {
+        //Context: Update level
+        // The order of update between components (Default value 0).
+        // Components with lower level updates first before the higher ones. No defenite update order is imposed for the components with the same update level.
+        // Useful for when a component needs information from another component but the other component need to be updated first.
+        // 
+        // Example: <c>TrackAngleBetweenLines</c> needs information from <c>TrackLineAngles</c>. Therefore, <c>TrackLineAngles</c> should have
+        // update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
+
+        //Element update
+        //Components sorted by update level, filtered by specific event subscribed to.
+        //Repetition is present here to avoid additional code complexity down the line.
+        //Key: Update level
+        //Value: Hashset of observsers subscribed to the specific event.
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointAddition = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointModification = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointRemoval = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointClear = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineAddition = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineModification = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineRemoval = new();
+        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineClear = new();
+
+        //Component update
+        //Components separated by the object to track, sorted by update level, and filtered by specific event subscribed to.
+        //Repetition is present here to avoid additional code complexity down the line.
+        //Dictionary key: instance of a component to track
+        //SortedList key: Component's update level
+        //Value: Hashset of observsers subscribed to the specific event.
+        public readonly Dictionary<object, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToComponentStart = new();
+        public readonly Dictionary<object, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToComponentFinished = new();
+    }
+
+    public class ObserverManagerDatabaseHandler
+    {
+
+    }
+
+    public class ObserverManagerCallHandler
+    {
+
+    }
 }
