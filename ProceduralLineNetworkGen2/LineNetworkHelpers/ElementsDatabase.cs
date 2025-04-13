@@ -44,14 +44,18 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             private readonly ElementUpdateType modification;
             private readonly ElementUpdateType removal;
             private readonly ElementUpdateType clear;
+            private readonly Action<uint, TElement> AdditionAction;
+            private readonly Action<uint, TElement> ModificationAction;
+            private readonly Action<uint, TElement> RemovalAction;
+            private readonly Action ClearAction;
 
-            public BaseElementDict(ObserverManager observer, ElementUpdateType addition, ElementUpdateType modification, ElementUpdateType removal, ElementUpdateType clear)
+            public BaseElementDict(ObserverManager observer, Action<uint, TElement> AdditionAction, Action<uint, TElement> ModificationAction, Action<uint, TElement> RemovalAction, Action ClearAction)
             {
                 this.observer = observer;
-                this.addition = addition;
-                this.modification = modification;
-                this.removal = removal;
-                this.clear = clear;
+                this.AdditionAction = AdditionAction;
+                this.ModificationAction = ModificationAction;
+                this.RemovalAction = RemovalAction;
+                this.ClearAction = ClearAction;
             }
 
             private readonly Dictionary<uint, TElement> internalDict = new();
@@ -72,7 +76,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             public void Add(uint Key, TElement value)
             {
                 internalDict.Add(Key, value);
-                observer.ElementAddOrRemoveNotifyObservers(addition, Key);
+                AdditionAction(Key, value);
             }
             void ICollection<KeyValuePair<uint, TElement>>.Add(KeyValuePair<uint, TElement> item)
             {
@@ -87,14 +91,14 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 {
                     TElement BeforeModification = internalDict[key];
                     internalDict[key] = value;
-                    observer.ElementModificationNotifyObservers(modification, key, BeforeModification!, value!);
+                    ModificationAction(key, value);
                 }
             }
 
             //Can modify dictionary by item removal
             public bool Remove(uint key)
             {
-                observer.ElementAddOrRemoveNotifyObservers(removal, key);
+                RemovalAction(key, internalDict[key]);
                 return internalDict.Remove(key);
             }
             bool ICollection<KeyValuePair<uint, TElement>>.Remove(KeyValuePair<uint, TElement> item)
@@ -103,7 +107,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             }
             public void Clear()
             {
-                observer.ElementClearNotifyObservers(clear);
+                ClearAction();
                 internalDict.Clear();
             }
         }
@@ -112,7 +116,8 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             readonly LineDict lineDict;
             readonly Dictionary<uint, HashSet<uint>> internalLinesOnPoint;
 
-            public PointDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint, LineDict lineDict) : base(observer, ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval, ElementUpdateType.OnPointClear)
+            public PointDict(ObserverManager observer, Dictionary<uint, HashSet<uint>> internalLinesOnPoint, LineDict lineDict) : 
+            base(observer, observer.callHandler(), ElementUpdateType.OnPointModification, ElementUpdateType.OnPointRemoval, ElementUpdateType.OnPointClear)
             {
                 this.lineDict = lineDict;
                 this.internalLinesOnPoint = internalLinesOnPoint;
