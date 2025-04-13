@@ -4,7 +4,7 @@ using GarageGoose.ProceduralLineNetwork.Manager;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
-    public class TrackLineAngles : ILineNetworkObserverElementSubscribe, ILineNetworkObserverElementAddedOrRemoved, ILineNetworkObserverElementModified, ILineNetworkObserverElementClear
+    public class TrackLineAngles : LineNetworkObserver
     {
         public bool ThreadSafeDataAccess { get; } = true;
 

@@ -21,7 +21,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
     public abstract class LineNetworkObserver
     {
         /// <summary>
-        /// The order of update between components (Default value 0).
+        /// The order of update between components.
         /// Components with lower level updates first before the higher ones. No defenite update order is imposed for the components with the same update level.
         /// Useful for when a component needs information from another component but the other component need to be updated first.
         /// 
@@ -74,9 +74,10 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// <param name="subscribeToComponentFinished">
         /// Subscribe a specific component to track when the component is finished doint its task in the line network.
         /// </param>
-        public LineNetworkObserver(uint updateLevel, ElementUpdateType[]? subscribeToElementsUpdate, object[]? subscribeToComponentStart, object[]? subscribeToComponentFinished)
+        public LineNetworkObserver(uint updateLevel, bool multithread, ElementUpdateType[]? subscribeToElementsUpdate, object[]? subscribeToComponentStart, object[]? subscribeToComponentFinished)
         {
             UpdateLevel = updateLevel;
+            Multithread = multithread;
             SubscribeToElementUpdates = subscribeToElementsUpdate;
             SubscribeToComponentStart = subscribeToComponentStart;
             SubscribeToComponentFinished = subscribeToComponentFinished;
