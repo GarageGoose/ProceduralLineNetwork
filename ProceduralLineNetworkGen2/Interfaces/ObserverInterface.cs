@@ -74,25 +74,54 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// Example: <c>TrackAngleBetweenLines</c> needs information from <c>TrackLineAngles</c>. Therefore, <c>TrackLineAngles</c> should have
         /// update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
         /// </summary>
-        public virtual uint UpdateLevel() { return 0; }
-
-        public ElementUpdateType[]? GetElementUpdateSubscription() => SubscribeToElementUpdates();
+        public readonly uint UpdateLevel;
         /// <summary>
         /// Subscribe to different element updates (ex. line added, point modified, and so on...). Subscribing is a must for related methods to be called.
         /// </summary>
-        protected virtual ElementUpdateType[]? SubscribeToElementUpdates() { return null; }
+        public readonly ElementUpdateType[]? SubscribeToElementUpdates;
 
-        public object[]? GetComponentStartSubscription() => SubscribeToComponentStart();
         /// <summary>
         /// Subscribe a specific component to track when its going to be used in the line network.
         /// </summary>
-        protected virtual object[]? SubscribeToComponentStart() { return null; }
+        public readonly object[]? SubscribeToComponentStart;
 
-        public object[]? GetComponentFinishedSubscription() => SubscribeToComponentFinished();
         /// <summary>
         /// Subscribe a specific component to track when the component is finished doint its task in the line network.
         /// </summary>
-        protected virtual object[]? SubscribeToComponentFinished() { return null; }
+        public readonly object[]? SubscribeToComponentFinished;
+
+        /// <summary>
+        /// Base class for the observer components.
+        /// </summary>
+        /// 
+        /// <param name="updateLevel">
+        /// The order of update between components (Default value 0).
+        /// Components with lower level updates first before the higher ones. No defenite update order is imposed for the components with the same update level.
+        /// Useful for when a component needs information from another component but the other component need to be updated first.
+        /// 
+        /// Example: <c>TrackAngleBetweenLines</c> needs information from <c>TrackLineAngles</c>. Therefore, <c>TrackLineAngles</c> should have
+        /// update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
+        /// </param>
+        /// 
+        /// <param name="subscribeToElementsUpdate">
+        /// Subscribe to different element updates (ex. line added, point modified, and so on...). Subscribing is a must for related methods to be called.
+        /// </param>
+        /// 
+        /// <param name="subscribeToComponentStart">
+        /// Subscribe a specific component to track when its going to be used in the line network.
+        /// </param>
+        /// 
+        /// <param name="subscribeToComponentFinished">
+        /// Subscribe a specific component to track when the component is finished doint its task in the line network.
+        /// </param>
+        public LineNetworkObserver(uint updateLevel, ElementUpdateType[]? subscribeToElementsUpdate, object[]? subscribeToComponentStart, object[]? subscribeToComponentFinished)
+        {
+            UpdateLevel = updateLevel;
+            SubscribeToElementUpdates = subscribeToElementsUpdate;
+            SubscribeToComponentStart = subscribeToComponentStart;
+            SubscribeToComponentFinished = subscribeToComponentFinished;
+        }
+
 
 
         public void NotifyPointAdded(uint key, Point newPoint) => PointAdded(key, newPoint);

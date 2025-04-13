@@ -1,6 +1,7 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace GarageGoose.ProceduralLineNetwork.Manager
 {
@@ -129,7 +130,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         }
     }
 
-    public class ObserverComponentDatabase
+    public class ObserverManagerDatabase
     {
         //Context: Update level
         // The order of update between components (Default value 0).
@@ -141,35 +142,174 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         //Element update
         //Components sorted by update level, filtered by specific event subscribed to.
-        //Repetition is present here to avoid additional code complexity down the line.
-        //Key: Update level
+        //Key: Update level (See comment above)
         //Value: Hashset of observsers subscribed to the specific event.
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointAddition = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointModification = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointRemoval = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToPointClear = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineAddition = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineModification = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineRemoval = new();
-        public readonly SortedList<uint, HashSet<LineNetworkObserver>> ComponentsSubscribedToLineClear = new();
+        public readonly Dictionary<ElementUpdateType, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToElementUpdate = new();
 
         //Component update
         //Components separated by the object to track, sorted by update level, and filtered by specific event subscribed to.
         //Repetition is present here to avoid additional code complexity down the line.
         //Dictionary key: instance of a component to track
-        //SortedList key: Component's update level
+        //SortedList key: Component's update level (See comment above)
         //Value: Hashset of observsers subscribed to the specific event.
         public readonly Dictionary<object, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToComponentStart = new();
         public readonly Dictionary<object, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToComponentFinished = new();
     }
 
-    public class ObserverManagerDatabaseHandler
+    internal class ObserverManagerDatabaseHandler
     {
+        private readonly ObservableCollection<LineNetworkObserver> observers;
+        private readonly ObserverManagerDatabase database;
+        public ObserverManagerDatabaseHandler(ObservableCollection<LineNetworkObserver> observers, ObserverManagerDatabase database)
+        {
+            this.observers = observers;
+            observers.CollectionChanged += CollectionChanged;
+            this.database = database;
+        }
 
+        private void CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+            {
+                foreach(LineNetworkObserver observer in e.NewItems!)
+                {
+                    AddObserversToDb(observer);
+                }
+            }
+            if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+            {
+                foreach (LineNetworkObserver observer in e.NewItems!)
+                {
+                    RemoveObserversToDb(observer);
+                }
+            }
+        }
+
+        private void AddObserversToDb(LineNetworkObserver observer)
+        {
+            if(observer.SubscribeToElementUpdates != null)
+            {
+                foreach (ElementUpdateType UpdateType in observer.SubscribeToElementUpdates)
+                {
+                    database.ComponentsSubscribedToElementUpdate[UpdateType].TryAdd(observer.UpdateLevel, new());
+                    database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Add(observer);
+                }
+            }
+            if(observer.SubscribeToComponentStart != null)
+            {
+                foreach(object component in observer.SubscribeToComponentStart)
+                {
+                    database.ComponentsSubscribedToComponentStart.TryAdd(component, new());
+                    database.ComponentsSubscribedToComponentStart[component].TryAdd(observer.UpdateLevel, new());
+                    database.ComponentsSubscribedToComponentStart[component][observer.UpdateLevel].Add(observer);
+                }
+            }
+            if (observer.SubscribeToComponentFinished != null)
+            {
+                foreach (object component in observer.SubscribeToComponentFinished)
+                {
+                    database.ComponentsSubscribedToComponentFinished.TryAdd(component, new());
+                    database.ComponentsSubscribedToComponentFinished[component].TryAdd(observer.UpdateLevel, new());
+                    database.ComponentsSubscribedToComponentFinished[component][observer.UpdateLevel].Add(observer);
+                }
+            }
+        }
+        private void RemoveObserversToDb(LineNetworkObserver observer)
+        {
+            if (observer.SubscribeToElementUpdates != null)
+            {
+                foreach (ElementUpdateType UpdateType in observer.SubscribeToElementUpdates)
+                {
+                    database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Remove(observer);
+                    if (database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Count == 0) 
+                    {
+                        database.ComponentsSubscribedToElementUpdate[UpdateType].Remove(observer.UpdateLevel);
+                    } 
+                }
+            }
+            if (observer.SubscribeToComponentStart != null)
+            {
+                foreach (object component in observer.SubscribeToComponentStart)
+                {
+                    database.ComponentsSubscribedToComponentStart[component][observer.UpdateLevel].Remove(observer);
+                    if(database.ComponentsSubscribedToComponentStart[component][observer.UpdateLevel].Count == 0)
+                    {
+                        database.ComponentsSubscribedToComponentStart[component].Remove(observer.UpdateLevel);
+                    }
+                    if (database.ComponentsSubscribedToComponentStart[component].Count == 0)
+                    {
+                        database.ComponentsSubscribedToComponentStart.Remove(component);
+                    }
+                }
+            }
+            if (observer.SubscribeToComponentFinished != null)
+            {
+                foreach (object component in observer.SubscribeToComponentFinished)
+                {
+                    database.ComponentsSubscribedToComponentFinished[component][observer.UpdateLevel].Remove(observer);
+                    if (database.ComponentsSubscribedToComponentFinished[component][observer.UpdateLevel].Count == 0)
+                    {
+                        database.ComponentsSubscribedToComponentFinished[component].Remove(observer.UpdateLevel);
+                    }
+                    if (database.ComponentsSubscribedToComponentFinished[component].Count == 0)
+                    {
+                        database.ComponentsSubscribedToComponentFinished.Remove(component);
+                    }
+                }
+            }
+        }
     }
 
-    public class ObserverManagerCallHandler
+    internal class ObserverManagerCallHandler
     {
+        ObserverManagerDatabase database;
+        internal ObserverManagerCallHandler(ObserverManagerDatabase database)
+        {
+            this.database = database;
+        }
 
+        public void PointUpdateAdd(uint key, Point point)
+        {
+
+        }
+        public void PointUpdateModification(uint key, Point before, Point after)
+        {
+
+        }
+        public void PointUpdateRemove(uint key, Point point)
+        {
+
+        }
+        public void PointUpdateClear()
+        {
+
+        }
+        public void LineUpdateAdd(uint key, Line line)
+        {
+
+        }
+        public void LineUpdateModification(uint key, Line before, Line after)
+        {
+
+        }
+        public void LineUpdateRemove(uint key, Line line)
+        {
+
+        }
+        public void LineUpdateClear()
+        {
+
+        }
+
+        private void CallHandler(SortedList<uint, HashSet<LineNetworkObserver>> list)
+        {
+            foreach (HashSet<LineNetworkObserver> observersAtSameUpdateLevel in list.Values)
+            {
+                foreach(LineNetworkObserver observer in observersAtSameUpdateLevel)
+                {
+
+                }
+            }
+        }
     }
 }

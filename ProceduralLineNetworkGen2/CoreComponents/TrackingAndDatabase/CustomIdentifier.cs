@@ -4,25 +4,12 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     class TrackAndModifyCustomIdentifier
     {
-
-    }
-    class ModifierAddLinesOnPoint
-    {
-        public interface IAddLinesOnPoint
+        LineNetwork lineNetwork;
+        public TrackAndModifyCustomIdentifier(LineNetwork lineNetwork)
         {
-
+            this.lineNetwork = lineNetwork;
         }
-    }
-    class ModifierSubdivideLines
-    {
 
-    }
-    class ModifierMergePointsInCloseProximity
-    {
-
-    }
-    class ModifierAddPointsOnLineIntersection
-    {
 
     }
 }
