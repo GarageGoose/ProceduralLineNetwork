@@ -15,9 +15,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         {
             foreach (ILineNetworkModification Component in UsedComponents)
             {
-                observer.ObserverActionNotifyObservers(Component, ComponentAction.Start);
+                observer.callHandler.ComponentStartUpdate(Component);
                 bool OperationSuccess = Component.ExecuteModification(SelectedElements);
-                observer.ObserverActionNotifyObservers(Component, ComponentAction.Finished);
+                observer.callHandler.ComponentFinishedUpdate(Component);
             }
         }
     }

@@ -31,7 +31,7 @@ namespace GarageGoose.ProceduralLineNetwork
 
         public LineNetwork(bool MultithreadObservers, bool MultithreadSearching)
         {
-            Observer = new(this, MultithreadObservers);
+            Observer = new(MultithreadObservers);
             KeyGenerator = new();
             Database = new(Observer);
             Modification = new(Observer);

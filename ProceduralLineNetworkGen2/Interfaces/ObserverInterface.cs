@@ -1,31 +1,7 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Elements;
-using System.Security.Cryptography.X509Certificates;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
-
-    /// <summary>
-    /// Observe changes on the line network. 
-    /// </summary>
-    public interface ILineNetworkObserverElementSubscribe
-    {
-        /// <returns>Types of events to track</returns>
-        ElementUpdateType[] observerElementSubscribeToEvents { get; }
-    }
-
-    public interface ILineNetworkObserverElementAddedOrRemoved
-    {
-        void LineNetworkElementAddedOrRemoved(ElementUpdateType UpdateType, uint Key);
-    }
-    public interface ILineNetworkObserverElementModified
-    {
-        void LineNetworkElementModified(ElementUpdateType UpdateType, uint Key, object OldElement, object NewElement);
-    }
-    public interface ILineNetworkObserverElementClear
-    {
-        void LineNetworkElementClear(ElementUpdateType UpdateType);
-    }
-
     public enum ElementUpdateType
     {
         /// <summary>
@@ -37,28 +13,6 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// Line update (Returns the line key (uint) associated with the event in LineNetworkElementUpdate)
         /// </summary>
         OnLineAddition, OnLineModification, OnLineRemoval, OnLineClear
-    }
-
-    public interface ILineNetworkObserverComponentAction
-    {
-        ComponentActionUpdate[] observerComponentActionSubscribeToEvents { get; }
-        void LineNetworkComponentUpdate(object Component, ComponentAction Action);
-    }
-
-    public enum ComponentAction
-    {
-        Start, Finished
-    }
-
-    public struct ComponentActionUpdate
-    {
-        public object component;
-        public ComponentAction action;
-        public ComponentActionUpdate(object component, ComponentAction action)
-        {
-            this.component = component;
-            this.action = action;
-        }
     }
 
     /// <summary>
@@ -75,6 +29,12 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
         /// </summary>
         public readonly uint UpdateLevel;
+
+        /// <summary>
+        /// When true, make classes with the same update level run simultaneously.
+        /// </summary>
+        public readonly bool Multithread;
+
         /// <summary>
         /// Subscribe to different element updates (ex. line added, point modified, and so on...). Subscribing is a must for related methods to be called.
         /// </summary>

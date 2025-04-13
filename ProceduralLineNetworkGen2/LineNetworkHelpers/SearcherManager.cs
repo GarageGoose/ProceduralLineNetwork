@@ -27,9 +27,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 List<HashSet<uint>> EligibleElementsByComponent = new();
                 foreach (ILineNetworkElementSearch Component in Components)
                 {
-                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Start);
+                    observer.callHandler.ComponentStartUpdate(Component);
                     EligibleElementsByComponent.Add(Component.Search());
-                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Finished);
+                    observer.callHandler.ComponentFinishedUpdate(Component);
                 }
 
                 //Sort the HashSets (eligible elements by components) from least count to most count to
@@ -48,9 +48,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             {
                 foreach (ILineNetworkElementSearch Component in Components)
                 {
-                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Start);
+                    observer.callHandler.ComponentStartUpdate(Component);
                     EligibleElements.UnionWith(Component.Search());
-                    observer.ObserverActionNotifyObservers(Component, ComponentAction.Finished);
+                    observer.callHandler.ComponentFinishedUpdate(Component);
                 }
             }
             return EligibleElements;
