@@ -13,7 +13,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         private readonly ObserverManagerDatabase database = new();
         private readonly ObserverManagerDatabaseHandler databaseHandler;
         internal readonly ObserverManagerCallHandler callHandler;
-        bool MultithreadObservers;
+        readonly bool MultithreadObservers;
         public ObserverManager(bool multithreadObservers)
         {
             databaseHandler = new(observerComponents, database);

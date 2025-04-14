@@ -41,14 +41,31 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         public readonly ElementUpdateType[]? SubscribeToElementUpdates;
 
         /// <summary>
+        /// Subscribe to different element updates (ex. line added, point modified, and so on...). Subscribing is a must for related methods to be called.
+        /// Only called once on the constructor and cannot be changed.
+        /// </summary>
+        protected virtual ElementUpdateType[]? SetSubscriptionToElementUpdates() { return null; }
+
+        /// <summary>
         /// Subscribe a specific component to track when its going to be used in the line network.
         /// </summary>
         public readonly object[]? SubscribeToComponentStart;
 
         /// <summary>
+        /// Subscribe a specific component to track when its going to be used in the line network.
+        /// Only called once on the constructor and cannot be changed.
+        /// </summary>
+        protected virtual object[]? SetSubscriptionToComponentStart() { return null; }
+
+        /// <summary>
         /// Subscribe a specific component to track when the component is finished doint its task in the line network.
         /// </summary>
         public readonly object[]? SubscribeToComponentFinished;
+        /// <summary>
+        /// Subscribe a specific component to track when the component is finished doint its task in the line network.
+        /// Only called once on the constructor and cannot be changed.
+        /// </summary>
+        protected virtual object[]? SetSubscriptionToComponentFinished() { return null; }
 
         /// <summary>
         /// Base class for the observer components.
@@ -74,13 +91,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// <param name="subscribeToComponentFinished">
         /// Subscribe a specific component to track when the component is finished doint its task in the line network.
         /// </param>
-        public LineNetworkObserver(uint updateLevel, bool multithread, ElementUpdateType[]? subscribeToElementsUpdate, object[]? subscribeToComponentStart, object[]? subscribeToComponentFinished)
+        public LineNetworkObserver(uint updateLevel, bool multithread)
         {
             UpdateLevel = updateLevel;
             Multithread = multithread;
-            SubscribeToElementUpdates = subscribeToElementsUpdate;
-            SubscribeToComponentStart = subscribeToComponentStart;
-            SubscribeToComponentFinished = subscribeToComponentFinished;
+            SubscribeToElementUpdates = SetSubscriptionToElementUpdates();
+            SubscribeToComponentStart = SetSubscriptionToComponentStart();
+            SubscribeToComponentFinished = SetSubscriptionToComponentFinished();
         }
 
 
