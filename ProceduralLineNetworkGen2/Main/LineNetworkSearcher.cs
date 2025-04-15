@@ -10,7 +10,7 @@ namespace GarageGoose.ProceduralLineNetwork
 {
     public class LineNetworkSearcher
     {
-        public HashSet<ILineNetworkSearcherContainer> SearcherComponents = new();
+        private HashSet<ILineNetworkSearcherContainer> SearcherComponents = new();
 
         public void Reset() => SearcherComponents.Clear();
 

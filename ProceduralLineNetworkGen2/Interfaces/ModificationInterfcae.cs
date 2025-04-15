@@ -1,9 +1,79 @@
 ﻿namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
-    public interface ILineNetworkModification
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier
     {
-        /// <param name="SelectedElements">Target elements to perform the modification</param>
-        /// <returns>True if the operation is successful, false if not</returns>
-        bool ExecuteModification(HashSet<uint> SelectedElements);
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify();
+    }
+
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier<TParam>
+    {
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify(TParam param);
+    }
+
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier<TParam1, TParam2>
+    {
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify(TParam1 param1, TParam2 param2);
+    }
+
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier<TParam1, TParam2, TParam3>
+    {
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify(TParam1 param1, TParam2 param2, TParam3 param3);
+    }
+
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier<TParam1, TParam2, TParam3, TParam4>
+    {
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify(TParam1 param1, TParam2 param2, TParam3 param3, TParam4 param4);
+    }
+
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier<TParam1, TParam2, TParam3, TParam4, TParam5>
+    {
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify(TParam1 param1, TParam2 param2, TParam3 param3, TParam4 param4, TParam5 param5);
+    }
+
+    /// <summary>
+    /// Base class for line network modifier components.
+    /// </summary>
+    public abstract class LineNetworkModifier<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>
+    {
+        /// <summary>
+        /// Modify the line network.
+        /// </summary>
+        public abstract void Modify(TParam1 param1, TParam2 param2, TParam3 param3, TParam4 param4, TParam5 param5, TParam6 param6);
     }
 }
