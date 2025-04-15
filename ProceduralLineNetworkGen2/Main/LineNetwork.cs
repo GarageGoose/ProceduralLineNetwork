@@ -1,3 +1,4 @@
+using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Manager;
 
 namespace GarageGoose.ProceduralLineNetwork
@@ -15,11 +16,6 @@ namespace GarageGoose.ProceduralLineNetwork
         public readonly ObserverManager Observer;
 
         /// <summary>
-        /// Search for eligible elements determined by specified components.
-        /// </summary>
-        public readonly SearcherManager Searcher;
-
-        /// <summary>
         /// Generates unique keys for elements (Points and Lines). Used for identification.
         /// </summary>
         public readonly ElementKeyGenerator KeyGenerator;
@@ -35,7 +31,6 @@ namespace GarageGoose.ProceduralLineNetwork
             KeyGenerator = new();
             Database = new(Observer);
             Modification = new(Observer);
-            Searcher = new(MultithreadSearching, Observer);
         }
     }
 }
