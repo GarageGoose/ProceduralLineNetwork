@@ -103,7 +103,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         private float InvertAngle(float Angle) => (Angle >= MathF.PI) ? Angle - MathF.PI : Angle + MathF.PI;
     }
 
-    public class TrackOrderOfLinesOnPoint : LineNetworkObserver
+    public class TrackOrderOfLinesOnPointOld : LineNetworkObserver
     {
         readonly TrackLineAngles lineAngle;
         readonly ElementsDatabase database;
@@ -113,7 +113,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         //SortedList value: line key.
         private readonly Dictionary<uint, SortedList<float, uint>> OrderedLinesOnPoint = new();
 
-        public TrackOrderOfLinesOnPoint(TrackLineAngles lineAngle, ElementsDatabase database) : base(1, true)
+        public TrackOrderOfLinesOnPointOld(TrackLineAngles lineAngle, ElementsDatabase database) : base(1, true)
         {
             this.lineAngle = lineAngle;
             this.database = database;
@@ -158,6 +158,62 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             OrderedLinesOnPoint[line.PointKey2].Remove(lineAngle.lineAngleFromPoint2[key]);
         }
         protected override void LineClear() => OrderedLinesOnPoint.Clear();
+    }
+
+    public class TrackOrderOfLinesOnPoint : LineNetworkObserver
+    {
+        readonly TrackLineAngles lineAngle;
+        readonly ElementsDatabase database;
+
+        //Dict key: point key.
+        //SortedList key: line angle from the perspective of the current point.
+        //SortedList value: line key.
+        private readonly Dictionary<uint, List<uint>> OrderedLinesOnPoint = new();
+
+        public TrackOrderOfLinesOnPoint(TrackLineAngles lineAngle, ElementsDatabase database) : base(1, true)
+        {
+            this.lineAngle = lineAngle;
+            this.database = database;
+        }
+
+        protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
+            [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
+
+        protected override void PointModified(uint key, Point before, Point after)
+        {
+
+        }
+        protected override void LineAdded(uint key, Line line)
+        {
+
+        }
+        protected override void LineModified(uint key, Line before, Line after)
+        {
+            if (before.PointKey1 != after.PointKey1)
+            {
+
+            }
+            if (before.PointKey2 != after.PointKey2)
+            {
+
+            }
+        }
+        protected override void LineRemoved(uint key, Line line)
+        {
+
+        }
+        protected override void LineClear() => OrderedLinesOnPoint.Clear();
+
+        private int InsertionIndexSearch(uint pointKey, float targetAngle)
+        {
+            for(int CurrInd = 0; CurrInd < OrderedLinesOnPoint[pointKey].Count; CurrInd++)
+            {
+                uint lineKey = OrderedLinesOnPoint[pointKey][CurrInd];
+                float CurrLineAngle = (database.lines[lineKey].PointKey1 == pointKey) ? lineAngle.lineAngleFromPoint1[pointKey] : lineAngle.lineAngleFromPoint2[pointKey];
+                if (CurrLineAngle <= targetAngle) return CurrInd - 1;
+            }
+            return OrderedLinesOnPoint[pointKey].Count;
+        }
     }
 
     public class TrackAngleBetweenLines : LineNetworkObserver
