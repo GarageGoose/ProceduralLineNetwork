@@ -1,6 +1,7 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
+using System.Collections.Generic;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
@@ -105,78 +106,59 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     public class TrackOrderOfLinesOnPoint : LineNetworkObserver
     {
         readonly TrackLineAngles lineAngle;
+        readonly ElementsDatabase database;
 
-        //Outer dict key: current point key.
-        //Inner dict key: current line key.
-        //Inner dict value: line key next to it.
-        private readonly Dictionary<uint, Dictionary<uint, uint>> NextLineToThis = new();
+        //Dict key: point key.
+        //SortedList key: line angle from the perspective of the current point.
+        //SortedList value: line key.
+        private readonly Dictionary<uint, SortedList<float, uint>> OrderedLinesOnPoint = new();
 
-        //Outer dict key: current point key.
-        //Inner dict key: current line key.
-        //Inner dict value: line key before it.
-        private readonly Dictionary<uint, Dictionary<uint, uint>> LastLineToThis = new();
-
-        //Example scenario, assume all lines connects to Point 1:
-        //Line 1 = 0 deg
-        //Line 2 = 90 deg
-        //Line 3 = 180 deg
-
-        //From the perspective of Line 2, Line 3 is next to it and Line 1 is before it.
-        //NextLineToThis[Point 1][Line 2] would return Line 3.
-        //LastLineToThis[Point 1][Line 2] would return Line 1.
-
-        //From the perspective of Line 1, Line 2 is next to it and Line 3 is before it.
-        //NextLineToThis[Point 1][Line 1] would return Line 2.
-        //LastLineToThis[Point 1][Line 1] would return Line 3.
-
-        //From the perspective of Line 3, Line 1 is next to it and Line 2 is before it.
-        //NextLineToThis[Point 1][Line 3] would return Line 1.
-        //LastLineToThis[Point 1][Line 3] would return Line 2.
-
-        public TrackOrderOfLinesOnPoint(TrackLineAngles lineAngle) : base(1, true)
+        public TrackOrderOfLinesOnPoint(TrackLineAngles lineAngle, ElementsDatabase database) : base(1, true)
         {
             this.lineAngle = lineAngle;
+            this.database = database;
         }
 
-        /// <summary>
-        /// A dictionary of line keys where the dictionary key is the target line and the value is the next line to it in terms of angles.
-        /// </summary>
-        /// <param name="Point">Target point.</param>
-        public IReadOnlyDictionary<uint, uint> NextConnectedLineOfALineOnAPoint(uint Point) => NextLineToThis[Point];
-
-        /// <summary>
-        /// A dictionary of line keys where the dictionary key is the target line and the value is the last line to it in terms of angles.
-        /// </summary>
-        /// <param name="Point">Target point.</param>
-        public IReadOnlyDictionary<uint, uint> LastConnectedLineOfALineOnAPoint(uint Point) => LastLineToThis[Point];
+        public IReadOnlyList<uint> GetOrderedLineKeysOnPoint(uint pointKey) => (IReadOnlyList<uint>)OrderedLinesOnPoint[pointKey].Values;
+        public IReadOnlyList<float> GetOrderedLineAnglesOnPoint(uint pointKey) => (IReadOnlyList<float>)OrderedLinesOnPoint[pointKey].Keys;
 
         protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() => 
             [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification,ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
 
         protected override void PointModified(uint key, Point before, Point after)
         {
-
+            OrderedLinesOnPoint[key].Clear();
+            foreach(uint lineKey in database.linesOnPoint.linesOnPoint[key])
+            {
+                float Angle = (database.lines[lineKey].PointKey1 == key) ? lineAngle.lineAngleFromPoint1[key] : lineAngle.lineAngleFromPoint2[key];
+                OrderedLinesOnPoint[key].Add(Angle, lineKey);
+            }
         }
         protected override void LineAdded(uint key, Line line)
         {
-            NextLineToThis.TryAdd(line.PointKey1, new());
-            NextLineToThis.TryAdd(line.PointKey2, new());
+            OrderedLinesOnPoint[line.PointKey1].Add(lineAngle.lineAngleFromPoint1[key], key);
+            OrderedLinesOnPoint[line.PointKey2].Add(lineAngle.lineAngleFromPoint2[key], key);
         }
         protected override void LineModified(uint key, Line before, Line after)
         {
-
+            if (before.PointKey1 != after.PointKey1)
+            {
+                OrderedLinesOnPoint[before.PointKey1].RemoveAt(OrderedLinesOnPoint[before.PointKey1].IndexOfValue(key));
+                OrderedLinesOnPoint[after.PointKey1].Add(lineAngle.lineAngleFromPoint1[key], key);
+            }
+            if (before.PointKey2 != after.PointKey2)
+            {
+                OrderedLinesOnPoint[before.PointKey2].RemoveAt(OrderedLinesOnPoint[before.PointKey2].IndexOfValue(key));
+                OrderedLinesOnPoint[after.PointKey2].Add(lineAngle.lineAngleFromPoint2[key], key);
+            }
         }
         protected override void LineRemoved(uint key, Line line)
         {
-
+            OrderedLinesOnPoint[line.PointKey1].Remove(lineAngle.lineAngleFromPoint1[key]);
+            OrderedLinesOnPoint[line.PointKey2].Remove(lineAngle.lineAngleFromPoint2[key]);
         }
-        protected override void LineClear()
-        {
-
-        }
+        protected override void LineClear() => OrderedLinesOnPoint.Clear();
     }
-
-
 
     public class TrackAngleBetweenLines : LineNetworkObserver
     {
