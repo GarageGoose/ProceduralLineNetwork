@@ -27,7 +27,7 @@ namespace GarageGoose.ProceduralLineNetwork
             HashSet<uint> finalEligibleElements = new();
             if (Multithread)
             {
-
+                
             }
             foreach (ILineNetworkSearcherContainer searcher in SearcherComponents)
             {
