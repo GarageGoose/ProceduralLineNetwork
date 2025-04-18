@@ -447,83 +447,28 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// 
     /// </summary>
-    public class TrackMaximumAngleBetweenLinesPerPoint : LineNetworkObserver
+    public class SortedAngleBetweenLinesInLineNetwork : LineNetworkObserver
     {
         private readonly TrackAngleBetweenLines angleBetweenLines;
         private readonly ElementsDatabase database;
 
-        private readonly Dictionary<uint, float> internalMaxAngles = new();
+        private readonly List<LineAngle> internalAngleBetweenLines = new();
 
-        private readonly Dictionary<uint, uint?> internalMaxAngleLineSource = new();
+        public class LineAngle
+        {
+            public uint lineKey;
+            public float angleBetweenLines;
+        }
 
-        public readonly IReadOnlyDictionary<uint, float> maxAngles;
-
-        public readonly IReadOnlyDictionary<uint, uint?> maxAngleLineSource;
-
-        public TrackMaximumAngleBetweenLinesPerPoint(TrackAngleBetweenLines angleBetweenLines, ElementsDatabase database) : base(0, true)
+        public SortedAngleBetweenLinesInLineNetwork(TrackAngleBetweenLines angleBetweenLines, ElementsDatabase database) : base(0, true)
         {
             this.angleBetweenLines = angleBetweenLines;
             this.database = database;
-            maxAngles = internalMaxAngles;
-            maxAngleLineSource = internalMaxAngleLineSource;
-        }
-
-        protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
-              [ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
-
-        protected override void PointModified(uint key, Point before, Point after)
-        {
-
-        }
-
-        protected override void PointAdded(uint key, Point point)
-        {
-            internalMaxAngles.Add(key, 2 * MathF.PI);
-            internalMaxAngleLineSource.Add(key, null);
-        }
-
-        protected override void LineAdded(uint key, Line line)
-        {
-            if (database.linesOnPoint.linesOnPoint[line.PointKey1].Count == 1)
-            {
-                internalMaxAngleLineSource.Add(line.PointKey1, key);
-            }
-            else if (angleBetweenLines.fromPoint1[(uint)internalMaxAngleLineSource[line.PointKey1]!] < internalMaxAngles[line.PointKey1])
-            {
-
-            }
-        }
-
-        protected override void LineModified(uint key, Line before, Line after)
-        {
-
-        }
-
-        protected override void LineRemoved(uint key, Line line)
-        {
-
-        }
-
-        protected override void LineClear()
-        {
-
-        }
-
-        private float SearchSmallestAngle
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class TrackMinimumAngleBetweenLinesPerPoint : LineNetworkObserver
-    {
-        public TrackMinimumAngleBetweenLinesPerPoint() : base(3, true)
-        {
 
         }
 
         protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
-            [ElementUpdateType.OnPointAddition, ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
+              [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
 
         protected override void PointModified(uint key, Point before, Point after)
         {
@@ -548,6 +493,28 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         protected override void LineClear()
         {
 
+        }
+
+        private void AddLine()
+        {
+
+        }
+        private void ModifyLine()
+        {
+
+        }
+        private void DeleteLine()
+        {
+
+        }
+
+        private int BinarySearchTarget(float angle)
+        {
+
+        }
+        private int BinarySearchInsert(float angle)
+        {
+            while()
         }
     }
 }
