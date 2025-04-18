@@ -540,14 +540,77 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
     }
     
-    public class SortedAngleList
-    {
-        public SortedSet<float> angles = new();
-        public Dictionary<float, uint[]> associatedLineKeysToTheAngle = new();
-        public Dictionary<uint, float> lineKeyAngle = new();
 
-        //sorted angles
-        //angle associated to lineKey(s)
-        //line key associated to its angle
+    public class SortedAngleSet
+    {
+        private readonly SortedSet<float> internalAngles = new();
+        private readonly Dictionary<float, uint> internalAngleToKey = new();
+        private readonly Dictionary<uint, float> internalKeyToAngle = new();
+
+        public readonly IReadOnlySet<float> angles;
+        public readonly IReadOnlyDictionary<float, uint> angleToKey;
+        public readonly IReadOnlyDictionary<uint, float> keyToAngle;
+
+        public IReadOnlySet<float> GetViewBetween(float min, float max) => internalAngles.GetViewBetween(min, max);
+
+        public SortedAngleSet()
+        {
+            angles = internalAngles;
+            angleToKey = internalAngleToKey;
+            keyToAngle = internalKeyToAngle;
+        }
+
+        /// <summary>
+        /// Add a new angle with its corresponding line key. Note that the stre angle might differ slightly
+        /// </summary>
+        /// <param name="angle"></param>
+        /// <param name="lineKey"></param>
+        public void Add(float angle, uint lineKey)
+        {
+            if (!internalAngles.Add(angle))
+            {
+                //Nudge the angle very slightly so that it would get added to the sortedlist while having microscopic difference.
+                float nudgeAngleAmount = (angle >= MathF.PI) ? 0.000001f : -0.000001f;
+                float nudgeAngle = angle + nudgeAngleAmount;
+                while (!internalAngles.Add(nudgeAngle))
+                {
+                    nudgeAngle += nudgeAngleAmount;
+                }
+                internalAngleToKey.Add(nudgeAngle, lineKey);
+                internalKeyToAngle.Add(lineKey, nudgeAngle);
+                return;
+            }
+            internalAngleToKey.Add(angle, lineKey);
+            internalKeyToAngle.Add(lineKey, angle);
+        }
+        public void Modify(uint lineKey, float newAngle)
+        {
+            float oldAngle = internalAngleToKey[lineKey];
+            internalAngles.Remove(oldAngle);
+            internalAngleToKey.Remove(oldAngle);
+
+            if (!internalAngles.Add(newAngle))
+            {
+                //Nudge the angle very slightly so that it would get added to the sortedlist while having microscopic difference.
+                float nudgeAngleAmount = (newAngle >= MathF.PI) ? 0.000001f : -0.000001f;
+                float nudgeAngle = newAngle + nudgeAngleAmount;
+                while (!internalAngles.Add(nudgeAngle))
+                {
+                    nudgeAngle += nudgeAngleAmount;
+                }
+                internalKeyToAngle[lineKey] = nudgeAngle;
+                internalAngleToKey.Add(nudgeAngle, lineKey);
+                return;
+            }
+            internalKeyToAngle[lineKey] = newAngle;
+            internalAngleToKey.Add(newAngle, lineKey);
+        }
+        public void Remove(uint lineKey)
+        {
+            float angle = internalKeyToAngle[lineKey];
+            internalKeyToAngle.Remove(lineKey);
+            internalAngleToKey.Remove(angle);
+            internalAngles.Remove(angle);
+        }
     }
 }
