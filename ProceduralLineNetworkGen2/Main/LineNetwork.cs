@@ -20,17 +20,11 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         public readonly ElementKeyGenerator KeyGenerator;
 
-        /// <summary>
-        /// Handles the modification of the line network.
-        /// </summary>
-        public readonly ModificationManager Modification;
-
         public LineNetwork(bool MultithreadObservers, bool MultithreadSearching)
         {
             Observer = new(MultithreadObservers);
             KeyGenerator = new();
             Database = new(Observer);
-            Modification = new(Observer);
         }
     }
 }

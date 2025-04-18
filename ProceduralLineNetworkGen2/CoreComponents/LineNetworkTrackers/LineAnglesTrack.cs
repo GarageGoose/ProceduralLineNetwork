@@ -4,10 +4,16 @@ using GarageGoose.ProceduralLineNetwork.Manager;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
+    public interface ILineAngleTracker
+    {
+        IReadOnlyDictionary<uint, float> fromPoint1 { get; }
+        IReadOnlyDictionary<uint, float> fromPoint2 { get; }
+    }
+
     /// <summary>
     /// 
     /// </summary>
-    public class TrackLineAngles : LineNetworkObserver
+    public class TrackLineAngles : LineNetworkObserver, ILineAngleTracker
     {
         public bool ThreadSafeDataAccess { get; } = true;
 
@@ -22,13 +28,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// Check line angle from the perspective of the first connected point.
         /// Key is line key and float is angle in radian.
         /// </summary>
-        public readonly IReadOnlyDictionary<uint, float> fromPoint1;
+        public IReadOnlyDictionary<uint, float> fromPoint1 { get; }
 
         /// <summary>
         /// Check line angle from the perspective of the second connected point.
         /// Key is line key and float is angle in radian.
         /// </summary>
-        public readonly IReadOnlyDictionary<uint, float> fromPoint2;
+        public IReadOnlyDictionary<uint, float> fromPoint2 { get; }
 
         protected override ElementUpdateType[]? SetSubscriptionToElementUpdates()
         {
@@ -341,7 +347,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// 
     /// </summary>
-    public class TrackAngleBetweenLines : LineNetworkObserver
+    public class TrackAngleBetweenLines : LineNetworkObserver, ILineAngleTracker
     {
         private readonly TrackLineAngles lineAngles;
         private readonly TrackOrderOfLinesOnPoint orderOfLines;
@@ -355,13 +361,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// Get the angle between the angle of this line from the perspective of point 1 and
         /// the angle of the line next to it from the perspective of point 1.
         /// </summary>
-        public IReadOnlyDictionary<uint, float> fromPoint1;
+        public IReadOnlyDictionary<uint, float> fromPoint1 { get; }
 
         /// <summary>
         /// Get the angle between the angle of this line from the perspective of point 2 and
         /// the angle of the line next to it from the perspective of point 2.
         /// </summary>
-        public IReadOnlyDictionary<uint, float> fromPoint2;
+        public IReadOnlyDictionary<uint, float> fromPoint2 { get; }
 
         public TrackAngleBetweenLines(TrackLineAngles lineAngles, ElementsDatabase database, TrackOrderOfLinesOnPoint orderOfLines) : base(2, true)
         {
@@ -435,66 +441,80 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// 
     /// </summary>
-    public class SortedAngleBetweenLinesInLineNetwork : LineNetworkObserver
+    public class SortedAnglesInLineNetwork : LineNetworkObserver
     {
-        private readonly TrackAngleBetweenLines angleBetweenLines;
+        private readonly ILineAngleTracker angleBetweenLines;
         private readonly ElementsDatabase database;
 
-        private SortedAngleSet internalLineAngles = new();
+        private SortedAngleSet<Tuple<uint, LineAtPoint>> lineAngles = new();
 
-        public readonly IReadOnlySet<float> lineAngles;
-        public readonly IReadOnlyDictionary<float, uint> angleToPointKey;
-        public readonly IReadOnlyDictionary<uint, float> PointKeyToAngle;
+        public readonly IReadOnlySet<float> angles;
+        public readonly IReadOnlyDictionary<float, Tuple<uint, LineAtPoint>> angleToPointKey;
 
-        public SortedAngleBetweenLinesInLineNetwork(TrackAngleBetweenLines angleBetweenLines, ElementsDatabase database) : base(0, true)
+        public SortedAnglesInLineNetwork(ILineAngleTracker angleTracker, ElementsDatabase database) : base(0, true)
         {
-            this.angleBetweenLines = angleBetweenLines;
+            this.angleBetweenLines = angleTracker;
             this.database = database;
 
-            lineAngles = internalLineAngles.angles;
-            angleToPointKey = internalLineAngles.angleToKey;
-            PointKeyToAngle = internalLineAngles.keyToAngle;
+            angles = lineAngles.angles;
+            angleToPointKey = lineAngles.angleToKey;
         }
 
-        public IReadOnlySet<float> GetViewBetween(float min, float max) => internalLineAngles.GetViewBetween(min, max);
+        public IReadOnlySet<float> GetViewBetween(float min, float max) => lineAngles.GetViewBetween(min, max);
 
         protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
               [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
 
         protected override void PointModified(uint key, Point before, Point after)
         {
-
+            foreach(uint lineKey in database.linesOnPoint.linesOnPoint[key])
+            {
+                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleBetweenLines.fromPoint1[lineKey]);
+                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleBetweenLines.fromPoint1[lineKey]);
+            }
         }
 
         protected override void LineAdded(uint key, Line line)
         {
-
+            lineAngles.Add(angleBetweenLines.fromPoint1[key], new(key, LineAtPoint.Point1));
+            lineAngles.Add(angleBetweenLines.fromPoint2[key], new(key, LineAtPoint.Point2));
         }
 
         protected override void LineModified(uint key, Line before, Line after)
         {
-
+            lineAngles.Modify(new(key, LineAtPoint.Point1), angleBetweenLines.fromPoint1[key]);
+            lineAngles.Modify(new(key, LineAtPoint.Point2), angleBetweenLines.fromPoint2[key]);
         }
 
         protected override void LineRemoved(uint key, Line line)
         {
-
+            lineAngles.Remove(new(key, LineAtPoint.Point1));
+            lineAngles.Remove(new(key, LineAtPoint.Point2));
         }
 
         protected override void LineClear()
         {
-
+            lineAngles = new();
         }
     }
-    
 
-    public class SortedAngleSetBase<TKey>
+    /// <summary>
+    /// Custom data structure for SortedAnglesInLineNetwork that is mainly backed by a SortedSet of angles that also act as a key for its associated line
+    /// </summary>
+    public class SortedAngleSet<TKey> where TKey : notnull
     {
         public readonly SortedSet<float> internalAngles = new();
         public readonly Dictionary<float, TKey> internalAngleToKey = new();
         public readonly Dictionary<TKey, float> internalKeyToAngle = new();
 
+        public IReadOnlySet<float> angles;
+        public IReadOnlyDictionary<float, TKey> angleToKey;
 
+        public SortedAngleSet()
+        {
+            angles = internalAngles;
+            angleToKey = internalAngleToKey;
+        }
 
         public IReadOnlySet<float> GetViewBetween(float min, float max) => internalAngles.GetViewBetween(min, max);
 
@@ -549,29 +569,6 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalKeyToAngle.Remove(lineKey);
             internalAngleToKey.Remove(angle);
             internalAngles.Remove(angle);
-        }
-    }
-    public class SortedLineAngles
-    {
-        private SortedAngleSetBase point1 = new();
-        private SortedAngleSetBase point2 = new();
-
-        public readonly IReadOnlySet<float> SortedAnglesFromPoint1;
-        public readonly IReadOnlySet<float> SortedAnglesFromPoint2;
-        public IReadOnlySet<float> GetViewBetweenFromPoint1(float min, float max) => point1.internalAngles.GetViewBetween(min, max);
-        public IReadOnlySet<float> GetViewBetweenFromPoint2(float min, float max) => point2.internalAngles.GetViewBetween(min, max);
-        public uint GetKeyFromPoint1(float angle) => point1.internalAngleToKey[angle];
-        public uint GetKeyFromPoint2(float angle) => point2.internalAngleToKey[angle];
-
-        public SortedLineAngles()
-        {
-            SortedAnglesFromPoint1 = point1.internalAngles;
-            SortedAnglesFromPoint2 = point2.internalAngles;
-        }
-
-        public void AddAtPoint1(float angle, )
-        {
-
         }
     }
 }
