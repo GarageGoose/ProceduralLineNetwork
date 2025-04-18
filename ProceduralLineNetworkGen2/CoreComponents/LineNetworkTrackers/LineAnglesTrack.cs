@@ -488,18 +488,22 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     }
     
 
-    public class SortedAngleSetBase
+    public class SortedAngleSetBase<TKey>
     {
         public readonly SortedSet<float> internalAngles = new();
-        public readonly Dictionary<float, uint> internalAngleToKey = new();
-        public readonly Dictionary<uint, float> internalKeyToAngle = new();
+        public readonly Dictionary<float, TKey> internalAngleToKey = new();
+        public readonly Dictionary<TKey, float> internalKeyToAngle = new();
+
+
+
+        public IReadOnlySet<float> GetViewBetween(float min, float max) => internalAngles.GetViewBetween(min, max);
 
         /// <summary>
         /// Add a new angle with its corresponding line key. Note that the angle might differ slightly
         /// </summary>
         /// <param name="angle"></param>
         /// <param name="lineKey"></param>
-        public void Add(float angle, uint lineKey)
+        public void Add(float angle, TKey lineKey)
         {
             if (!internalAngles.Add(angle))
             {
@@ -517,9 +521,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalAngleToKey.Add(angle, lineKey);
             internalKeyToAngle.Add(lineKey, angle);
         }
-        public void Modify(uint lineKey, float newAngle)
+        public void Modify(TKey lineKey, float newAngle)
         {
-            float oldAngle = internalAngleToKey[lineKey];
+            float oldAngle = internalKeyToAngle[lineKey];
             internalAngles.Remove(oldAngle);
             internalAngleToKey.Remove(oldAngle);
 
@@ -539,7 +543,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalKeyToAngle[lineKey] = newAngle;
             internalAngleToKey.Add(newAngle, lineKey);
         }
-        public void Remove(uint lineKey)
+        public void Remove(TKey lineKey)
         {
             float angle = internalKeyToAngle[lineKey];
             internalKeyToAngle.Remove(lineKey);
@@ -549,12 +553,25 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     }
     public class SortedLineAngles
     {
-        private SortedAngleSetBase point1;
-        private SortedAngleSetBase point2;
+        private SortedAngleSetBase point1 = new();
+        private SortedAngleSetBase point2 = new();
 
+        public readonly IReadOnlySet<float> SortedAnglesFromPoint1;
+        public readonly IReadOnlySet<float> SortedAnglesFromPoint2;
         public IReadOnlySet<float> GetViewBetweenFromPoint1(float min, float max) => point1.internalAngles.GetViewBetween(min, max);
         public IReadOnlySet<float> GetViewBetweenFromPoint2(float min, float max) => point2.internalAngles.GetViewBetween(min, max);
+        public uint GetKeyFromPoint1(float angle) => point1.internalAngleToKey[angle];
+        public uint GetKeyFromPoint2(float angle) => point2.internalAngleToKey[angle];
 
-        public uint GetAngleKey
+        public SortedLineAngles()
+        {
+            SortedAnglesFromPoint1 = point1.internalAngles;
+            SortedAnglesFromPoint2 = point2.internalAngles;
+        }
+
+        public void AddAtPoint1(float angle, )
+        {
+
+        }
     }
 }
