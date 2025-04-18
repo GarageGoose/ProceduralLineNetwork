@@ -443,7 +443,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// </summary>
     public class SortedAnglesInLineNetwork : LineNetworkObserver
     {
-        private readonly ILineAngleTracker angleBetweenLines;
+        private readonly ILineAngleTracker angleTracker;
         private readonly ElementsDatabase database;
 
         private SortedAngleSet<Tuple<uint, LineAtPoint>> lineAngles = new();
@@ -453,7 +453,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         public SortedAnglesInLineNetwork(ILineAngleTracker angleTracker, ElementsDatabase database) : base(0, true)
         {
-            this.angleBetweenLines = angleTracker;
+            this.angleTracker = angleTracker;
             this.database = database;
 
             angles = lineAngles.angles;
@@ -469,21 +469,21 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         {
             foreach(uint lineKey in database.linesOnPoint.linesOnPoint[key])
             {
-                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleBetweenLines.fromPoint1[lineKey]);
-                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleBetweenLines.fromPoint1[lineKey]);
+                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleTracker.fromPoint1[lineKey]);
+                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleTracker.fromPoint1[lineKey]);
             }
         }
 
         protected override void LineAdded(uint key, Line line)
         {
-            lineAngles.Add(angleBetweenLines.fromPoint1[key], new(key, LineAtPoint.Point1));
-            lineAngles.Add(angleBetweenLines.fromPoint2[key], new(key, LineAtPoint.Point2));
+            lineAngles.Add(angleTracker.fromPoint1[key], new(key, LineAtPoint.Point1));
+            lineAngles.Add(angleTracker.fromPoint2[key], new(key, LineAtPoint.Point2));
         }
 
         protected override void LineModified(uint key, Line before, Line after)
         {
-            lineAngles.Modify(new(key, LineAtPoint.Point1), angleBetweenLines.fromPoint1[key]);
-            lineAngles.Modify(new(key, LineAtPoint.Point2), angleBetweenLines.fromPoint2[key]);
+            lineAngles.Modify(new(key, LineAtPoint.Point1), angleTracker.fromPoint1[key]);
+            lineAngles.Modify(new(key, LineAtPoint.Point2), angleTracker.fromPoint2[key]);
         }
 
         protected override void LineRemoved(uint key, Line line)
@@ -499,7 +499,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     }
 
     /// <summary>
-    /// Custom data structure for SortedAnglesInLineNetwork that is mainly backed by a SortedSet of angles that also act as a key for its associated line
+    /// Custom data structure for SortedAnglesInLineNetwork that is mainly backed by a SortedSet of angles that allows dupelicate
+    /// internally via nudging the values microscopically and that also act as a key for its associated line.
     /// </summary>
     public class SortedAngleSet<TKey> where TKey : notnull
     {
