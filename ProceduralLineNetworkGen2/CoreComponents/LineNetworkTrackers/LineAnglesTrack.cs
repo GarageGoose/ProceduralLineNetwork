@@ -67,19 +67,14 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         protected override void LineModified(uint key, Line before, Line after)
         {
-            //Store the angle from the perspective of point 1 to save performance by just inverting this angle for point 2 (as oppose to recalculating it) just incase both end on the line is changed.
-            float? angleFromPoint1New = null;
-
-            if (before.PointKey1 != after.PointKey1)
+            if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
-                angleFromPoint1New = CalcAngle(database.LinePoint1(key), database.LinePoint2(key));
+                //Store the angle from the perspective of point 1 to save performance by just inverting this angle for point 2 (as oppose to recalculating it) just incase both end on the line is changed.
+                float angleFromPoint1New = CalcAngle(database.LinePoint1(key), database.LinePoint2(key));
                 internalLineAngleFromPoint1[key] = (float)angleFromPoint1New;
-            }
 
-            if (before.PointKey2 != after.PointKey2)
-            {
-                //Invert the angle if isn't null to avoid expensive computation, else recompute it from the perspective of point 2
-                internalLineAngleFromPoint2[key] = (angleFromPoint1New != null) ? InvertAngle((float)angleFromPoint1New) : CalcAngle(database.LinePoint2(key), database.LinePoint1(key));
+                //Invert the angle to avoid expensive computation
+                internalLineAngleFromPoint2[key] = InvertAngle((float)angleFromPoint1New);
             }
         }
 
@@ -157,13 +152,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         //When the line changed its connected point(s).
         protected override void LineModified(uint key, Line before, Line after)
         {
-            if (before.PointKey1 != after.PointKey1)
+            if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
                 DeleteLine(before.PointKey1, key);
                 InsertLine(after.PointKey1, key);
-            }
-            if (before.PointKey2 != after.PointKey2)
-            {
+
                 DeleteLine(before.PointKey2, key);
                 InsertLine(after.PointKey2, key);
             }
@@ -403,12 +396,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
         protected override void LineModified(uint key, Line before, Line after)
         {
-            if (before.PointKey1 != after.PointKey1)
+            if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
                 internalAngleFromPoint1[key] = CalcAngleBetweenLines(after.PointKey1, key, after);
-            }
-            if (before.PointKey2 != after.PointKey2)
-            {
                 internalAngleFromPoint2[key] = CalcAngleBetweenLines(after.PointKey2, key, after);
             }
         }
@@ -452,13 +442,10 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         private readonly TrackAngleBetweenLines angleBetweenLines;
         private readonly ElementsDatabase database;
 
-        private readonly List<LineAngle> internalAngleBetweenLines = new();
+        private readonly SortedList<float, object> internalAnglesFromPoint1 = new();
+        private readonly Dictionary<uint, int> keysInHashSet = new();
 
-        public class LineAngle
-        {
-            public uint lineKey;
-            public float angleBetweenLines;
-        }
+        private readonly SortedList<float, object> internalAnglesFromPoint2 = new();
 
         public SortedAngleBetweenLinesInLineNetwork(TrackAngleBetweenLines angleBetweenLines, ElementsDatabase database) : base(0, true)
         {
@@ -495,26 +482,72 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         }
 
-        private void AddLine()
+        private void AddLineFromPoint1(float angle, uint lineKey)
         {
-
+            if(!internalAnglesFromPoint1.TryAdd(angle, lineKey))
+            {
+                if (internalAnglesFromPoint1[angle] is HashSet<uint>)
+                {
+                    ((HashSet<uint>)internalAnglesFromPoint1[angle]).Add(lineKey);
+                }
+                else
+                {
+                    HashSet<uint> lineKeys = new();
+                    lineKeys.Add(lineKey);
+                    keysInHashSet.Add(lineKey, );
+                    lineKeys.Add((uint)internalAnglesFromPoint1[angle]);
+                    internalAnglesFromPoint1[angle] = lineKeys;
+                }
+            }
         }
-        private void ModifyLine()
+
+        private void AddLineFromPoint2(float angle, uint lineKey)
         {
-
+            if (!internalAnglesFromPoint2.TryAdd(angle, lineKey))
+            {
+                if (internalAnglesFromPoint2[angle] is HashSet<uint>)
+                {
+                    ((HashSet<uint>)internalAnglesFromPoint2[angle]).Add(lineKey);
+                }
+                else
+                {
+                    HashSet<uint> lineKeys = new();
+                    lineKeys.Add(lineKey);
+                    internalAnglesFromPoint1[angle] = lineKeys;
+                }
+            }
         }
-        private void DeleteLine()
+
+        private void ModifyLineFromPoint1(float newAngle, uint lineKey)
         {
-
+            
         }
-
-        private int BinarySearchTarget(float angle)
+        private void DeleteLineFromPoint1(float angle, uint lineKey)
         {
+            if (internalAnglesFromPoint1[angle] is HashSet<uint>)
+            {
+                if (internalAnglesFromPoint1[angle] is HashSet<uint>)
+                {
+                    ((HashSet<uint>)internalAnglesFromPoint1[angle]).Add(lineKey);
+                }
+                else
+                {
+                    HashSet<uint> lineKeys = new();
+                    lineKeys.Add(lineKey);
+                    internalAnglesFromPoint1[angle] = lineKeys;
+                }
+            }
+        }
+    }
+    
+    public class SortedAngleList
+    {
+        public SortedSet<float> angles = new();
+        public Dictionary<float, uint[]> associatedLineKeysToTheAngle = new();
+        public Dictionary<uint, float> lineKeyAngle = new();
 
-        }
-        private int BinarySearchInsert(float angle)
-        {
-            while()
-        }
+        //sorted angles
+        //angle associated to lineKey(s)
+        //line key associated to its angle
     }
 }
