@@ -13,4 +13,14 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
         public uint PointKey1;
         public uint PointKey2;
     }
+
+    public enum ElementType
+    {
+        Point, Line, Unknown
+    }
+
+    public enum LineAtPoint
+    {
+        Point1, Point2
+    }
 }

@@ -440,17 +440,23 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         private readonly TrackAngleBetweenLines angleBetweenLines;
         private readonly ElementsDatabase database;
 
-        private readonly SortedList<float, object> internalAnglesFromPoint1 = new();
-        private readonly Dictionary<uint, int> keysInHashSet = new();
+        private SortedAngleSet internalLineAngles = new();
 
-        private readonly SortedList<float, object> internalAnglesFromPoint2 = new();
+        public readonly IReadOnlySet<float> lineAngles;
+        public readonly IReadOnlyDictionary<float, uint> angleToPointKey;
+        public readonly IReadOnlyDictionary<uint, float> PointKeyToAngle;
 
         public SortedAngleBetweenLinesInLineNetwork(TrackAngleBetweenLines angleBetweenLines, ElementsDatabase database) : base(0, true)
         {
             this.angleBetweenLines = angleBetweenLines;
             this.database = database;
 
+            lineAngles = internalLineAngles.angles;
+            angleToPointKey = internalLineAngles.angleToKey;
+            PointKeyToAngle = internalLineAngles.keyToAngle;
         }
+
+        public IReadOnlySet<float> GetViewBetween(float min, float max) => internalLineAngles.GetViewBetween(min, max);
 
         protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
               [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
@@ -479,87 +485,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         {
 
         }
-
-        private void AddLineFromPoint1(float angle, uint lineKey)
-        {
-            if(!internalAnglesFromPoint1.TryAdd(angle, lineKey))
-            {
-                if (internalAnglesFromPoint1[angle] is HashSet<uint>)
-                {
-                    ((HashSet<uint>)internalAnglesFromPoint1[angle]).Add(lineKey);
-                }
-                else
-                {
-                    HashSet<uint> lineKeys = new();
-                    lineKeys.Add(lineKey);
-                    keysInHashSet.Add(lineKey, );
-                    lineKeys.Add((uint)internalAnglesFromPoint1[angle]);
-                    internalAnglesFromPoint1[angle] = lineKeys;
-                }
-            }
-        }
-
-        private void AddLineFromPoint2(float angle, uint lineKey)
-        {
-            if (!internalAnglesFromPoint2.TryAdd(angle, lineKey))
-            {
-                if (internalAnglesFromPoint2[angle] is HashSet<uint>)
-                {
-                    ((HashSet<uint>)internalAnglesFromPoint2[angle]).Add(lineKey);
-                }
-                else
-                {
-                    HashSet<uint> lineKeys = new();
-                    lineKeys.Add(lineKey);
-                    internalAnglesFromPoint1[angle] = lineKeys;
-                }
-            }
-        }
-
-        private void ModifyLineFromPoint1(float newAngle, uint lineKey)
-        {
-            
-        }
-        private void DeleteLineFromPoint1(float angle, uint lineKey)
-        {
-            if (internalAnglesFromPoint1[angle] is HashSet<uint>)
-            {
-                if (internalAnglesFromPoint1[angle] is HashSet<uint>)
-                {
-                    ((HashSet<uint>)internalAnglesFromPoint1[angle]).Add(lineKey);
-                }
-                else
-                {
-                    HashSet<uint> lineKeys = new();
-                    lineKeys.Add(lineKey);
-                    internalAnglesFromPoint1[angle] = lineKeys;
-                }
-            }
-        }
     }
     
 
-    public class SortedAngleSet
+    public class SortedAngleSetBase
     {
-        private readonly SortedSet<float> internalAngles = new();
-        private readonly Dictionary<float, uint> internalAngleToKey = new();
-        private readonly Dictionary<uint, float> internalKeyToAngle = new();
-
-        public readonly IReadOnlySet<float> angles;
-        public readonly IReadOnlyDictionary<float, uint> angleToKey;
-        public readonly IReadOnlyDictionary<uint, float> keyToAngle;
-
-        public IReadOnlySet<float> GetViewBetween(float min, float max) => internalAngles.GetViewBetween(min, max);
-
-        public SortedAngleSet()
-        {
-            angles = internalAngles;
-            angleToKey = internalAngleToKey;
-            keyToAngle = internalKeyToAngle;
-        }
+        public readonly SortedSet<float> internalAngles = new();
+        public readonly Dictionary<float, uint> internalAngleToKey = new();
+        public readonly Dictionary<uint, float> internalKeyToAngle = new();
 
         /// <summary>
-        /// Add a new angle with its corresponding line key. Note that the stre angle might differ slightly
+        /// Add a new angle with its corresponding line key. Note that the angle might differ slightly
         /// </summary>
         /// <param name="angle"></param>
         /// <param name="lineKey"></param>
@@ -610,5 +546,15 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalAngleToKey.Remove(angle);
             internalAngles.Remove(angle);
         }
+    }
+    public class SortedLineAngles
+    {
+        private SortedAngleSetBase point1;
+        private SortedAngleSetBase point2;
+
+        public IReadOnlySet<float> GetViewBetweenFromPoint1(float min, float max) => point1.internalAngles.GetViewBetween(min, max);
+        public IReadOnlySet<float> GetViewBetweenFromPoint2(float min, float max) => point2.internalAngles.GetViewBetween(min, max);
+
+        public uint GetAngleKey
     }
 }
