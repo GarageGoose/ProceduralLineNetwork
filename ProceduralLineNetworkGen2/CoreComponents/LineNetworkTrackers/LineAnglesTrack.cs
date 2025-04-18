@@ -1,8 +1,6 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
-using System.Collections.Generic;
-using System.Runtime.Intrinsics.X86;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
