@@ -1,6 +1,7 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace GarageGoose.ProceduralLineNetwork.Manager
 {
@@ -81,16 +82,18 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         private void CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
+            Debug.WriteLine("g");
             if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
             {
                 foreach(LineNetworkObserver observer in e.NewItems!)
                 {
+                    Debug.WriteLine("s");
                     AddObserversToDb(observer);
                 }
             }
             if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
             {
-                foreach (LineNetworkObserver observer in e.NewItems!)
+                foreach (LineNetworkObserver observer in e.OldItems!)
                 {
                     RemoveObserversToDb(observer);
                 }
@@ -184,30 +187,40 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         }
         //Element update
         public void PointUpdateAdd(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyPointAdded(key, point));
-        public void PointUpdateModification(uint key, Point before, Point after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyPointModified(key, before, after));
-        public void PointUpdateRemove(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyPointRemoved(key, point));
-        public void PointUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyPointClear());
-        public void LineUpdateAdd(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyLineAdded(key, line));
-        public void LineUpdateModification(uint key, Line before, Line after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyLineModified(key, before, after));
-        public void LineUpdateRemove(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyLineRemoved(key, line));
-        public void LineUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyLineClear());
+        public void PointUpdateModification(uint key, Point before, Point after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointModification], observer => observer.NotifyPointModified(key, before, after));
+        public void PointUpdateRemove(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointRemoval], observer => observer.NotifyPointRemoved(key, point));
+        public void PointUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointClear], observer => observer.NotifyPointClear());
+        public void LineUpdateAdd(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineAddition], observer => observer.NotifyLineAdded(key, line));
+        public void LineUpdateModification(uint key, Line before, Line after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineModification], observer => observer.NotifyLineModified(key, before, after));
+        public void LineUpdateRemove(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineRemoval], observer => observer.NotifyLineRemoved(key, line));
+        public void LineUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineClear], observer => observer.NotifyLineClear());
 
         //Component update
-        public void ComponentStartUpdate(object component) => CallHandler(database.ComponentsSubscribedToComponentStart[component], observer => observer.NotifyComponentStart(component));
-        public void ComponentFinishedUpdate(object component) => CallHandler(database.ComponentsSubscribedToComponentStart[component], observer => observer.NotifyComponentFinished(component));
+        public void ComponentStartUpdate(object component)
+        {
+            if (!database.ComponentsSubscribedToComponentStart.ContainsKey(component)) return;
+            CallHandler(database.ComponentsSubscribedToComponentStart[component], observer => observer.NotifyComponentStart(component));
+        } 
+        public void ComponentFinishedUpdate(object component)
+        {
+            if (!database.ComponentsSubscribedToComponentFinished.ContainsKey(component)) return;
+            CallHandler(database.ComponentsSubscribedToComponentFinished[component], observer => observer.NotifyComponentFinished(component));
+        }
 
         private void CallHandler(SortedList<uint, HashSet<LineNetworkObserver>> list, Action<LineNetworkObserver> CallInstruction)
         {
+            Debug.WriteLine("o");
             foreach (HashSet<LineNetworkObserver> observersAtSameUpdateLevel in list.Values)
             {
+                Debug.WriteLine("found obs, 1");
                 foreach(LineNetworkObserver observer in observersAtSameUpdateLevel)
                 {
+                    Debug.WriteLine("found obs, 2: " + observer + ", " + CallInstruction);
                     ComponentStartUpdate(observer);
                     CallInstruction(observer);
                     ComponentFinishedUpdate(observer);
                 }
             }
         }
-
     }
 }

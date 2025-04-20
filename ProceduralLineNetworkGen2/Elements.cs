@@ -2,14 +2,26 @@
 
 namespace GarageGoose.ProceduralLineNetwork.Elements
 {
-    public class Point
+    public interface ILineNetworkElement { }
+
+    public class Point : ILineNetworkElement
     {
+        public Point(float x, float y)
+        {
+            this.x = x;
+            this.y = y;
+        }
         public float x;
         public float y;
     }
 
-    public class Line
+    public class Line : ILineNetworkElement
     {
+        public Line(uint pointKey1, uint pointKey2)
+        {
+            this.PointKey1 = pointKey1;
+            this.PointKey2 = pointKey2;
+        }
         public uint PointKey1;
         public uint PointKey2;
     }

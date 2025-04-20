@@ -1,5 +1,6 @@
 using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Manager;
+using GarageGoose.ProceduralLineNetwork.Elements;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
@@ -25,6 +26,13 @@ namespace GarageGoose.ProceduralLineNetwork
             Observer = new(MultithreadObservers);
             KeyGenerator = new();
             Database = new(Observer);
+        }
+
+        public uint AddLine(Line line)
+        {
+            uint Key = KeyGenerator.GenerateKey();
+            Database.lines.Add(Key, line);
+            return Key;
         }
     }
 }
