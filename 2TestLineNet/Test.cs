@@ -16,9 +16,13 @@ namespace _2TestLineNet
             TrackLineAngles lineAngle = new(ln.Database);
             TrackOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Database);
             TrackAngleBetweenLines abl = new(lineAngle, ln.Database, lineOrder);
-            ln.Observer.observerComponents.Add(lineAngle);
-            ln.Observer.observerComponents.Add(lineOrder);
-            ln.Observer.observerComponents.Add(abl);
+            //ln.Observer.observerComponents.Add(lineAngle);
+            //ln.Observer.observerComponents.Add(lineOrder);
+            //ln.Observer.observerComponents.Add(abl);
+
+            ln.AddObserver(lineAngle);
+            ln.AddObserver(lineOrder);
+            ln.AddObserver(abl);
 
             uint pointKey1 = ln.KeyGenerator.GenerateKey();
             uint pointKey2 = ln.KeyGenerator.GenerateKey();
