@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
-    internal class LineNetworkModifier
+    public class LineNetworkModifier
     {
 
     }

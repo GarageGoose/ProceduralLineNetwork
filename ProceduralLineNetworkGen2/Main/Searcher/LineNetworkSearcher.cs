@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GarageGoose.ProceduralLineNetwork.Manager;
+﻿using GarageGoose.ProceduralLineNetwork.Manager;
 using GarageGoose.ProceduralLineNetwork.Component.Interface;
-using System.Reflection.Metadata.Ecma335;
 namespace GarageGoose.ProceduralLineNetwork
 {
-    public class LineNetworkSearcher
+    /// <summary>
+    /// Handles element searching for multiple component at once.
+    /// </summary>
+    public class LineNetworkBatchSearch
     {
         private HashSet<ILineNetworkSearcherContainer> SearcherComponents = new();
 

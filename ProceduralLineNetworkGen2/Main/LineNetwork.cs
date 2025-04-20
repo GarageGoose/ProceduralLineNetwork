@@ -12,7 +12,7 @@ namespace GarageGoose.ProceduralLineNetwork
         public readonly ElementsDatabase Database;
 
         /// <summary>
-        /// Handles tracking changes and documenting the database further using additional components. This creates more comprehensive data that modification components can work out on.
+        /// Handles observation of the elements using additional components. This creates more comprehensive data that modification components can work out on.
         /// </summary>
         public readonly ObserverManager Observer;
 
@@ -28,8 +28,8 @@ namespace GarageGoose.ProceduralLineNetwork
             Database = new(Observer);
         }
 
-
         //Down below is the shortcuts to commonly used methods for simplicity.
+        //
 
         /// <summary>
         /// Add a new line to the line network.

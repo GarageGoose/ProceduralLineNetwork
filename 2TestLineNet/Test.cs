@@ -16,25 +16,17 @@ namespace _2TestLineNet
             TrackLineAngles lineAngle = new(ln.Database);
             TrackOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Database);
             TrackAngleBetweenLines abl = new(lineAngle, ln.Database, lineOrder);
-            //ln.Observer.observerComponents.Add(lineAngle);
-            //ln.Observer.observerComponents.Add(lineOrder);
-            //ln.Observer.observerComponents.Add(abl);
 
             ln.AddObserver(lineAngle);
             ln.AddObserver(lineOrder);
             ln.AddObserver(abl);
 
-            uint pointKey1 = ln.KeyGenerator.GenerateKey();
-            uint pointKey2 = ln.KeyGenerator.GenerateKey();
-            uint pointKey3 = ln.KeyGenerator.GenerateKey();
-            ln.Database.points.Add(pointKey1, new(0, 0));
-            ln.Database.points.Add(pointKey2, new(0, 1));
-            ln.Database.points.Add(pointKey3, new(1, 0));
+            uint pointKey1 = ln.AddPoint(0, 0);
+            uint pointKey2 = ln.AddPoint(0, 1);
+            uint pointKey3 = ln.AddPoint(1, 0);
 
-            uint lineKey1 = ln.KeyGenerator.GenerateKey();
-            uint lineKey2 = ln.KeyGenerator.GenerateKey();
-            ln.Database.lines.Add(lineKey2, new(pointKey1, pointKey3));
-            ln.Database.lines.Add(lineKey1, new(pointKey2, pointKey1));
+            uint lineKey1 = ln.AddLine(pointKey1, pointKey2);
+            uint lineKey2 = ln.AddLine(pointKey1, pointKey3);
 
             Console.WriteLine(lineAngle.fromPoint1[lineKey1]);
             Console.WriteLine(abl.fromPoint1[lineKey1]);

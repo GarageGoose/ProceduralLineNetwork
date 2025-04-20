@@ -7,8 +7,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// <summary>
         /// 
         /// </summary>
-        /// <returns></returns>
         public virtual bool ThreadSafeSearch() { return false; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public virtual bool PerformantElementException() { return false; }
+
     }
 
     /// <summary>
