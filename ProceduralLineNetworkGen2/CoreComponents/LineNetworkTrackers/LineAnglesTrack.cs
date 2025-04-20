@@ -403,7 +403,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         protected override void LineAdded(uint key, Line line)
         {
             internalAngleFromPoint1.Add(key, CalcAngleBetweenLinesOnCurrLinePoint1(key, line));
+            uint lineKeyBeforeCurrLineFromPoint1 = orderOfLines.LastLineOfALine(line.PointKey1, key);
+            internalAngleFromPoint1[lineKeyBeforeCurrLineFromPoint1] = CalcAngleBetweenLinesOnCurrLinePoint1(lineKeyBeforeCurrLineFromPoint1, database.lines[lineKeyBeforeCurrLineFromPoint1]);
+
             internalAngleFromPoint2.Add(key, CalcAngleBetweenLinesOnCurrLinePoint2(key, line));
+            uint lineKeyBeforeCurrLineFromPoint2 = orderOfLines.LastLineOfALine(line.PointKey2, key);
+            internalAngleFromPoint1[lineKeyBeforeCurrLineFromPoint2] = CalcAngleBetweenLinesOnCurrLinePoint1(lineKeyBeforeCurrLineFromPoint2, database.lines[lineKeyBeforeCurrLineFromPoint2]);
+
         }
         protected override void LineModified(uint key, Line before, Line after)
         {
@@ -462,6 +468,19 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             if (thisLineAngle > nextLineAngle) { return nextLineAngle + (2 * MathF.PI) - thisLineAngle; }
 
             return nextLineAngle - thisLineAngle;
+        }
+
+        private float CalculateAngleDiff(float thisAngle, float nextAngle)
+        {
+            //Check if the current line is the last line to calculate the angle differently
+            //Example scenario:
+            //Last line (current line) = 2Pi rad
+            //First line (next line) = 0 rad
+            //doing 0 - 2Pi would obviously result in wrong calculation
+            //Solution: add 2Pi to the next line so that 2Pi - 2Pi = 0, yay!
+            if (thisAngle > nextAngle) { return nextAngle + (2 * MathF.PI) - thisAngle; }
+
+            return nextAngle - thisAngle;
         }
     }
 
