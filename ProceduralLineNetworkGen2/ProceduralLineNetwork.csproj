@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="ComponentOutputInterfaces\" />
+    <Compile Remove="ComponentOutputInterfaces\**" />
+    <EmbeddedResource Remove="ComponentOutputInterfaces\**" />
+    <None Remove="ComponentOutputInterfaces\**" />
   </ItemGroup>
 
 </Project>

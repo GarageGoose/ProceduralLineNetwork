@@ -1,4 +1,5 @@
-﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
+﻿using System.Diagnostics;
+using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
 
@@ -62,6 +63,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         protected override void LineAdded(uint key, Line newLine)
         {
+            Console.WriteLine("called: " + key);
             float Point1Angle = CalcAngle(database.LinePoint1(key), database.LinePoint2(key));
             internalLineAngleFromPoint1.Add(key, Point1Angle);
 
@@ -186,6 +188,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             {
                 listOfLineKeys.Add(lineKeyToInsert);
                 UpdateDictElementAdded(pointKey, lineKeyToInsert, 0, LineListPos.Only);
+                return;
             }
             float angleBeforeCurrAngle = 0;
             float currAngle = GetLineAngleUnsafe(lineKeyToInsert, pointKey);
@@ -389,21 +392,21 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         {
             foreach(uint lineKey in database.linesOnPoint.linesOnPoint[key])
             {
-                internalAngleFromPoint1[lineKey] = CalcAngleBetweenLines(database.lines[lineKey].PointKey1, lineKey, database.lines[lineKey]);
-                internalAngleFromPoint2[lineKey] = CalcAngleBetweenLines(database.lines[lineKey].PointKey2, lineKey, database.lines[lineKey]);
+                internalAngleFromPoint1[lineKey] = CalcAngleBetweenLinesOnCurrLinePoint1(database.lines[lineKey].PointKey1, lineKey, database.lines[lineKey]);
+                internalAngleFromPoint2[lineKey] = CalcAngleBetweenLinesOnCurrLinePoint2(database.lines[lineKey].PointKey2, lineKey, database.lines[lineKey]);
             }
         }
         protected override void LineAdded(uint key, Line line)
         {
-            internalAngleFromPoint1.Add(key, CalcAngleBetweenLines(line.PointKey1, key, line));
-            internalAngleFromPoint2.Add(key, CalcAngleBetweenLines(line.PointKey2, key, line));
+            internalAngleFromPoint1.Add(key, CalcAngleBetweenLinesOnCurrLinePoint1(line.PointKey1, key, line));
+            internalAngleFromPoint2.Add(key, CalcAngleBetweenLinesOnCurrLinePoint2(line.PointKey2, key, line));
         }
         protected override void LineModified(uint key, Line before, Line after)
         {
             if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
-                internalAngleFromPoint1[key] = CalcAngleBetweenLines(after.PointKey1, key, after);
-                internalAngleFromPoint2[key] = CalcAngleBetweenLines(after.PointKey2, key, after);
+                internalAngleFromPoint1[key] = CalcAngleBetweenLinesOnCurrLinePoint1(after.PointKey1, key, after);
+                internalAngleFromPoint2[key] = CalcAngleBetweenLinesOnCurrLinePoint2(after.PointKey2, key, after);
             }
         }
         protected override void LineRemoved(uint key, Line line)
@@ -417,9 +420,29 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalAngleFromPoint2.Clear();
         }
 
-        private float CalcAngleBetweenLines(uint pointKey, uint lineKey, Line line)
+        private float CalcAngleBetweenLinesOnCurrLinePoint1(uint pointKey, uint lineKey, Line line)
         {
-            float thisLineAngle = (line.PointKey1 == pointKey) ? lineAngles.fromPoint1[pointKey] : lineAngles.fromPoint2[pointKey];
+            float thisLineAngle = lineAngles.fromPoint1[lineKey];
+            uint getNextLineKey = orderOfLines.NextLineOfALine(pointKey, lineKey);
+            float nextLineAngle = (database.lines[getNextLineKey].PointKey1 == pointKey) ? lineAngles.fromPoint1[getNextLineKey] : lineAngles.fromPoint2[getNextLineKey];
+
+            //Check if the current line is the only line in the point, if so, return 2Pi to avoid calculation.
+            if (database.linesOnPoint.linesOnPoint[pointKey].Count == 1) { return 2 * MathF.PI; }
+
+            //Check if the current line is the last line to calculate the angle differently
+            //Example scenario:
+            //Last line (current line) = 2Pi rad
+            //First line (next line) = 0 rad
+            //doing 0 - 2Pi would obviously result in wrong calculation
+            //Solution: add 2Pi to the next line so that 2Pi - 2Pi = 0, yay!
+            if (thisLineAngle > nextLineAngle) { return nextLineAngle + (2 * MathF.PI) - thisLineAngle; }
+
+            //Calculate the difference of the two edge case scenarios above is false
+            return nextLineAngle - thisLineAngle;
+        }
+        private float CalcAngleBetweenLinesOnCurrLinePoint2(uint pointKey, uint lineKey, Line line)
+        {
+            float thisLineAngle = lineAngles.fromPoint2[lineKey];
             uint getNextLineKey = orderOfLines.NextLineOfALine(pointKey, lineKey);
             float nextLineAngle = (database.lines[getNextLineKey].PointKey1 == pointKey) ? lineAngles.fromPoint1[getNextLineKey] : lineAngles.fromPoint2[getNextLineKey];
 
