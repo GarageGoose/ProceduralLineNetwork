@@ -29,8 +29,8 @@ namespace _2TestLineNet
 
             uint lineKey1 = ln.KeyGenerator.GenerateKey();
             uint lineKey2 = ln.KeyGenerator.GenerateKey();
-            ln.Database.lines.Add(lineKey1, new(pointKey1, pointKey2));
             ln.Database.lines.Add(lineKey2, new(pointKey1, pointKey3));
+            ln.Database.lines.Add(lineKey1, new(pointKey2, pointKey1));
 
             Console.WriteLine(lineAngle.fromPoint1[lineKey1]);
             Console.WriteLine(abl.fromPoint1[lineKey1]);
