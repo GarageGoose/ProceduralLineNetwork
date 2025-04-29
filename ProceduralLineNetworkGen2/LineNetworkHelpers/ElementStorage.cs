@@ -5,13 +5,13 @@ using System.Xml.Linq;
 
 namespace GarageGoose.ProceduralLineNetwork.Manager
 {
-    public class ElementsDatabase
+    public class ElementStorage
     {
         public readonly PointDict points;
         public readonly LineDict lines;
         public readonly LinesOnPoint linesOnPoint = new();
 
-        public ElementsDatabase(ObserverManager observer)
+        public ElementStorage(ObserverManager observer)
         {
             lines = linesOnPoint.NewLineDict(observer);
             points = linesOnPoint.NewPointDict(observer, lines);

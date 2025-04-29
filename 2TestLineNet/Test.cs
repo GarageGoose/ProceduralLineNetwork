@@ -13,9 +13,9 @@ namespace _2TestLineNet
 
             LineNetwork ln = new(false, false);
 
-            TrackLineAngles lineAngle = new(ln.Database);
-            TrackOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Database);
-            TrackAngleBetweenLines abl = new(lineAngle, ln.Database, lineOrder);
+            ObserveLineAngles lineAngle = new(ln.Storage);
+            ObserveOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Storage);
+            ObserveAngleBetweenLines abl = new(lineAngle, ln.Storage, lineOrder);
 
             ln.AddObserver(lineAngle);
             ln.AddObserver(lineOrder);

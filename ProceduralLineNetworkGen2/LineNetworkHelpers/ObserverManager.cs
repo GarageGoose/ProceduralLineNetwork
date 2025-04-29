@@ -33,8 +33,8 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         // Components with lower level updates first before the higher ones. No defenite update order is imposed for the components with the same update level.
         // Useful for when a component needs information from another component but the other component need to be updated first.
         // 
-        // Example: <c>TrackAngleBetweenLines</c> needs information from <c>TrackLineAngles</c>. Therefore, <c>TrackLineAngles</c> should have
-        // update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
+        // Example: <c>ObserveAngleBetweenLines</c> needs information from <c>ObserveLineAngles</c>. Therefore, <c>ObserveLineAngles</c> should have
+        // update level of 0 while <c>ObserveAngleBetweenLines</c> should have update level of 1.
 
         //Element update
         //Components sorted by update level, filtered by specific event subscribed to.

@@ -25,8 +25,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// Components with lower level updates first before the higher ones. No defenite update order is imposed for the components with the same update level.
         /// Useful for when a component needs information from another component but the other component need to be updated first.
         /// 
-        /// Example: <c>TrackAngleBetweenLines</c> needs information from <c>TrackLineAngles</c>. Therefore, <c>TrackLineAngles</c> should have
-        /// update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
+        /// Example: <c>ObserveAngleBetweenLines</c> needs information from <c>ObserveLineAngles</c>. Therefore, <c>ObserveLineAngles</c> should have
+        /// update level of 0 while <c>ObserveAngleBetweenLines</c> should have update level of 1.
         /// </summary>
         public readonly uint UpdateLevel;
 
@@ -76,8 +76,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         /// Components with lower level updates first before the higher ones. No defenite update order is imposed for the components with the same update level.
         /// Useful for when a component needs information from another component but the other component need to be updated first.
         /// 
-        /// Example: <c>TrackAngleBetweenLines</c> needs information from <c>TrackLineAngles</c>. Therefore, <c>TrackLineAngles</c> should have
-        /// update level of 0 while <c>TrackAngleBetweenLines</c> should have update level of 1.
+        /// Example: <c>ObserveAngleBetweenLines</c> needs information from <c>ObserveLineAngles</c>. Therefore, <c>ObserveLineAngles</c> should have
+        /// update level of 0 while <c>ObserveAngleBetweenLines</c> should have update level of 1.
         /// </param>
         /// 
         /// <param name="subscribeToElementsUpdate">
@@ -167,7 +167,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         public void NotifyComponentStart(object Component) => ComponentStart(Component);
         /// <summary>
         /// Triggers when a component is about to be used. Return the target component on <c>SubscribeToComponentStart</c> to track it.
-        /// Example: Triggers just before <c>TrackLineAngles</c> is notified when a line is added to the database, assuming it is tracking it.
+        /// Example: Triggers just before <c>ObserveLineAngles</c> is notified when a line is added to the database, assuming it is tracking it.
         /// Note that this isn't going to trigger when the component is used outside the line network. 
         /// </summary>
         protected virtual void ComponentStart(object Component) { }
@@ -175,9 +175,16 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         public void NotifyComponentFinished(object Component) => ComponentFinished(Component);
         /// <summary>
         /// Triggers when a component is used. Return the target component on <c>SubscribeToComponentStart</c> to track it.
-        /// Example: Triggers after <c>TrackLineAngles</c> is notified when a line is added to the database and done doing its thing, assuming it is tracking it.
+        /// Example: Triggers after <c>ObserveLineAngles</c> is notified when a line is added to the database and done doing its thing, assuming it is tracking it.
         /// Note that this isn't going to trigger when the component is used outside the line network. 
         /// </summary>
         protected virtual void ComponentFinished(object Component) { }
+    }
+
+
+    public interface ILineAngleTracker
+    {
+        IReadOnlyDictionary<uint, float> fromPoint1 { get; }
+        IReadOnlyDictionary<uint, float> fromPoint2 { get; }
     }
 }
