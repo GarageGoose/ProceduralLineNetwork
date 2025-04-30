@@ -69,6 +69,12 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
     }
 
+    public interface ILineAngleTracker
+    {
+        IReadOnlyDictionary<uint, float> fromPoint1 { get; }
+        IReadOnlyDictionary<uint, float> fromPoint2 { get; }
+    }
+
     /// <summary>
     /// Custom data structure for SortedAngles that is mainly backed by a SortedSet of angles that allows dupelicate
     /// internally via nudging the values microscopically and that also act as a key for its associated line.

@@ -29,7 +29,6 @@ namespace GarageGoose.ProceduralLineNetwork
         }
 
         //Down below is the shortcuts to commonly used methods for simplicity.
-        //
 
         /// <summary>
         /// Add a new line to the line network.

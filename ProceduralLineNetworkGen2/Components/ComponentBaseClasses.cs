@@ -2,18 +2,22 @@
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
-    public enum ElementUpdateType
+    /// <summary>
+    /// Base class for the element searcher components
+    /// </summary>
+    public abstract class LineNetowrkSearcher
     {
-        /// <summary>
-        /// Point update (Returns the point key (uint) associated with the event in LineNetworkElementUpdate)
-        /// </summary>
-        OnPointAddition, OnPointModification, OnPointRemoval, OnPointClear,
 
-        /// <summary>
-        /// Line update (Returns the line key (uint) associated with the event in LineNetworkElementUpdate)
-        /// </summary>
-        OnLineAddition, OnLineModification, OnLineRemoval, OnLineClear
     }
+
+    /// <summary>
+    /// Base class for the line network modifier components
+    /// </summary>
+    public abstract class LineNetowrkModifier
+    {
+
+    }
+
 
     /// <summary>
     /// Base class for the observer components.
@@ -182,9 +186,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
     }
 
 
-    public interface ILineAngleTracker
+
+    public enum ElementUpdateType
     {
-        IReadOnlyDictionary<uint, float> fromPoint1 { get; }
-        IReadOnlyDictionary<uint, float> fromPoint2 { get; }
+        /// <summary>
+        /// Point update (Returns the point key (uint) associated with the event in LineNetworkElementUpdate)
+        /// </summary>
+        OnPointAddition, OnPointModification, OnPointRemoval, OnPointClear,
+
+        /// <summary>
+        /// Line update (Returns the line key (uint) associated with the event in LineNetworkElementUpdate)
+        /// </summary>
+        OnLineAddition, OnLineModification, OnLineRemoval, OnLineClear
     }
 }
