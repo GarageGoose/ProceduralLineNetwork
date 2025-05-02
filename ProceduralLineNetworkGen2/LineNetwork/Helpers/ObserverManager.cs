@@ -11,14 +11,14 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     public class ObserverManager
     {
         public readonly ObservableCollection<LineNetworkObserver> observerComponents = new();
-        private readonly ObserverManagerDatabase database = new();
-        private readonly ObserverManagerDatabaseHandler databaseHandler;
+        private readonly ObserverManagerSubscriptionStorage database = new();
+        private readonly ObserverManagerSubscriptionStorageHandler databaseHandler;
         internal readonly ObserverManagerCallHandler callHandler;
         readonly bool MultithreadObservers;
         public ObserverManager(bool multithreadObservers)
         {
-            databaseHandler = new(observerComponents, database);
             callHandler = new(database);
+            databaseHandler = new(observerComponents, database, callHandler);
             MultithreadObservers = multithreadObservers;
         }
     }
@@ -26,7 +26,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     /// <summary>
     /// Tracks the subscriptions of components.
     /// </summary>
-    internal class ObserverManagerDatabase
+    internal class ObserverManagerSubscriptionStorage
     {
         //Context: Update level
         // The order of update between components (Default value 0).
@@ -42,7 +42,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         //Value: Hashset of observsers subscribed to the specific event.
         public readonly Dictionary<ElementUpdateType, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToElementUpdate = new();
 
-        public ObserverManagerDatabase()
+        public ObserverManagerSubscriptionStorage()
         {
             //Add all element update type since its very likely that atleast one element will subscribe to each element update type
             foreach(ElementUpdateType type in Enum.GetValues(typeof(ElementUpdateType)))
@@ -50,34 +50,25 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 ComponentsSubscribedToElementUpdate.Add(type, new());
             }
         }
-
-        //Component update
-        //Components separated by the object to track, sorted by update level, and filtered by specific event subscribed to.
-        //Repetition is present here to avoid additional code complexity down the line.
-        //Dictionary key: instance of a component to track
-        //SortedList key: Component's update level (See comment above)
-        //Value: Hashset of observsers subscribed to the specific event.
-        public readonly Dictionary<object, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToComponentStart = new();
-        public readonly Dictionary<object, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToComponentFinished = new();
-        //In this case, a target component will be deleted when none is subscribed to it in these two dictionary since in most cases none will be subscribed
-        //to a specific component.
     }
 
     /// <summary>
-    /// Updates <c>ObserverManagerDatabase</c> when a component is added or removed.
+    /// Updates <c>ObserverManagerSubscriptionStorage</c> when a component is added or removed.
     /// </summary>
-    internal class ObserverManagerDatabaseHandler
+    internal class ObserverManagerSubscriptionStorageHandler
     {
         //Used for tracking added or removed observers to add their subscriptions to the database.
         private readonly ObservableCollection<LineNetworkObserver> observers;
 
+        private readonly ObserverManagerSubscriptionStorage database;
 
-        private readonly ObserverManagerDatabase database;
-        public ObserverManagerDatabaseHandler(ObservableCollection<LineNetworkObserver> observers, ObserverManagerDatabase database)
+        private readonly ObserverManagerCallHandler callHandle;
+        public ObserverManagerSubscriptionStorageHandler(ObservableCollection<LineNetworkObserver> observers, ObserverManagerSubscriptionStorage database, ObserverManagerCallHandler callHandle)
         {
             this.observers = observers;
             observers.CollectionChanged += CollectionChanged;
             this.database = database;
+            this.callHandle = callHandle;
         }
 
         private void CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -89,6 +80,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 {
                     Debug.WriteLine("s");
                     AddObserversToDb(observer);
+
                 }
             }
             if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
@@ -110,24 +102,6 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                     database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Add(observer);
                 }
             }
-            if(observer.SubscribeToComponentStart != null)
-            {
-                foreach(object component in observer.SubscribeToComponentStart)
-                {
-                    database.ComponentsSubscribedToComponentStart.TryAdd(component, new());
-                    database.ComponentsSubscribedToComponentStart[component].TryAdd(observer.UpdateLevel, new());
-                    database.ComponentsSubscribedToComponentStart[component][observer.UpdateLevel].Add(observer);
-                }
-            }
-            if (observer.SubscribeToComponentFinished != null)
-            {
-                foreach (object component in observer.SubscribeToComponentFinished)
-                {
-                    database.ComponentsSubscribedToComponentFinished.TryAdd(component, new());
-                    database.ComponentsSubscribedToComponentFinished[component].TryAdd(observer.UpdateLevel, new());
-                    database.ComponentsSubscribedToComponentFinished[component][observer.UpdateLevel].Add(observer);
-                }
-            }
         }
         private void RemoveObserversToDb(LineNetworkObserver observer)
         {
@@ -142,46 +116,16 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                     } 
                 }
             }
-            if (observer.SubscribeToComponentStart != null)
-            {
-                foreach (object component in observer.SubscribeToComponentStart)
-                {
-                    database.ComponentsSubscribedToComponentStart[component][observer.UpdateLevel].Remove(observer);
-                    if(database.ComponentsSubscribedToComponentStart[component][observer.UpdateLevel].Count == 0)
-                    {
-                        database.ComponentsSubscribedToComponentStart[component].Remove(observer.UpdateLevel);
-                    }
-                    if (database.ComponentsSubscribedToComponentStart[component].Count == 0)
-                    {
-                        database.ComponentsSubscribedToComponentStart.Remove(component);
-                    }
-                }
-            }
-            if (observer.SubscribeToComponentFinished != null)
-            {
-                foreach (object component in observer.SubscribeToComponentFinished)
-                {
-                    database.ComponentsSubscribedToComponentFinished[component][observer.UpdateLevel].Remove(observer);
-                    if (database.ComponentsSubscribedToComponentFinished[component][observer.UpdateLevel].Count == 0)
-                    {
-                        database.ComponentsSubscribedToComponentFinished[component].Remove(observer.UpdateLevel);
-                    }
-                    if (database.ComponentsSubscribedToComponentFinished[component].Count == 0)
-                    {
-                        database.ComponentsSubscribedToComponentFinished.Remove(component);
-                    }
-                }
-            }
         }
     }
 
     /// <summary>
-    /// Handles distributing an update call to the subscribed components via <c>ObserverManagerDatabase</c>.
+    /// Handles distributing an update call to the subscribed components via <c>ObserverManagerSubscriptionStorage</c>.
     /// </summary>
     internal class ObserverManagerCallHandler
     {
-        ObserverManagerDatabase database;
-        internal ObserverManagerCallHandler(ObserverManagerDatabase database)
+        ObserverManagerSubscriptionStorage database;
+        internal ObserverManagerCallHandler(ObserverManagerSubscriptionStorage database)
         {
             this.database = database;
         }
@@ -195,18 +139,6 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         public void LineUpdateRemove(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineRemoval], observer => observer.NotifyLineRemoved(key, line));
         public void LineUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineClear], observer => observer.NotifyLineClear());
 
-        //Component update
-        public void ComponentStartUpdate(object component)
-        {
-            if (!database.ComponentsSubscribedToComponentStart.ContainsKey(component)) return;
-            CallHandler(database.ComponentsSubscribedToComponentStart[component], observer => observer.NotifyComponentStart(component));
-        } 
-        public void ComponentFinishedUpdate(object component)
-        {
-            if (!database.ComponentsSubscribedToComponentFinished.ContainsKey(component)) return;
-            CallHandler(database.ComponentsSubscribedToComponentFinished[component], observer => observer.NotifyComponentFinished(component));
-        }
-
         private void CallHandler(SortedList<uint, HashSet<LineNetworkObserver>> list, Action<LineNetworkObserver> CallInstruction)
         {
             Debug.WriteLine("o");
@@ -216,9 +148,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
                 foreach(LineNetworkObserver observer in observersAtSameUpdateLevel)
                 {
                     Debug.WriteLine("found obs, 2: " + observer + ", " + CallInstruction);
-                    ComponentStartUpdate(observer);
                     CallInstruction(observer);
-                    ComponentFinishedUpdate(observer);
                 }
             }
         }

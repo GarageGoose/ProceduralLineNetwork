@@ -51,27 +51,6 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
         protected virtual ElementUpdateType[]? SetSubscriptionToElementUpdates() { return null; }
 
         /// <summary>
-        /// Subscribe a specific component to track when its going to be used in the line network.
-        /// </summary>
-        public readonly object[]? SubscribeToComponentStart;
-
-        /// <summary>
-        /// Subscribe a specific component to track when its going to be used in the line network.
-        /// Only called once on the constructor and cannot be changed.
-        /// </summary>
-        protected virtual object[]? SetSubscriptionToComponentStart() { return null; }
-
-        /// <summary>
-        /// Subscribe a specific component to track when the component is finished doint its task in the line network.
-        /// </summary>
-        public readonly object[]? SubscribeToComponentFinished;
-        /// <summary>
-        /// Subscribe a specific component to track when the component is finished doint its task in the line network.
-        /// Only called once on the constructor and cannot be changed.
-        /// </summary>
-        protected virtual object[]? SetSubscriptionToComponentFinished() { return null; }
-
-        /// <summary>
         /// Base class for the observer components.
         /// </summary>
         /// 
@@ -100,8 +79,6 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
             UpdateLevel = updateLevel;
             Multithread = multithread;
             SubscribeToElementUpdates = SetSubscriptionToElementUpdates();
-            SubscribeToComponentStart = SetSubscriptionToComponentStart();
-            SubscribeToComponentFinished = SetSubscriptionToComponentFinished();
         }
 
 

@@ -29,6 +29,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         {
             this.lineAngle = lineAngle;
             this.database = database;
+
+            foreach (uint lineKey in database.lines.Keys)
+            {
+                LineAdded(lineKey, database.lines[lineKey]);
+            }
         }
 
         public IReadOnlyList<uint> GetOrderOfLinesOnPoint(uint pointKey) => OrderedLinesOnPoint[pointKey];

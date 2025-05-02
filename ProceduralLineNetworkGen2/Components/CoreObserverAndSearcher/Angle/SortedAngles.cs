@@ -22,13 +22,18 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         public readonly IReadOnlySet<float> angles;
         public readonly IReadOnlyDictionary<float, Tuple<uint, LineAtPoint>> angleToPointKey;
 
-        public SortedAngles(ILineAngleTracker angleTracker, ElementStorage database) : base(0, true)
+        public SortedAngles(ILineAngleTracker angleTracker, uint angleTrackerUpdateLevel, ElementStorage database) : base(angleTrackerUpdateLevel + 1, true)
         {
             this.angleTracker = angleTracker;
             this.database = database;
 
             angles = lineAngles.angles;
             angleToPointKey = lineAngles.angleToKey;
+
+            foreach (uint lineKey in database.lines.Keys)
+            {
+                LineAdded(lineKey, new(0, 0));
+            }
         }
 
         public IReadOnlySet<float> GetViewBetween(float min, float max) => lineAngles.GetViewBetween(min, max);

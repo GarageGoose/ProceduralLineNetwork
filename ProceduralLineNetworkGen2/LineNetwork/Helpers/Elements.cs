@@ -2,6 +2,7 @@
 
 namespace GarageGoose.ProceduralLineNetwork.Elements
 {
+
     public interface ILineNetworkElement { }
 
     public class Point : ILineNetworkElement

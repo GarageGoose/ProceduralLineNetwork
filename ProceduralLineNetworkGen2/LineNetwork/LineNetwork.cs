@@ -4,6 +4,9 @@ using GarageGoose.ProceduralLineNetwork.Elements;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class LineNetwork
     {
         /// <summary>
@@ -128,6 +131,17 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         /// <param name="observer">Observer to add.</param>
         public void AddObserver(LineNetworkObserver observer) => Observer.observerComponents.Add(observer);
+
+        /// <summary>
+        /// Add an observer to the line network.
+        /// An observer observes different specific parts of the line network and create data additional data from.
+        /// </summary>
+        /// <param name="observer">Observer to add.</param>
+        public TObserver AddObserver<TObserver>(TObserver observer) where TObserver : LineNetworkObserver
+        {
+            Observer.observerComponents.Add(observer);
+            return observer;
+        }
 
         /// <summary>
         /// Remove an observer to the line network.

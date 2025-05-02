@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProceduralLineNetwork.CoreComponents.LineNetworkModification
+namespace ProceduralLineNetwork.LineNetwork
 {
-    public class AddPointAtLineIntersection
+    /// <summary>
+    /// 
+    /// </summary>
+    public class MultiModificationHandler
     {
 
     }

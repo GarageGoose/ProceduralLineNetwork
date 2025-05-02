@@ -45,6 +45,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             fromPoint1 = internalAngleFromPoint1;
             fromPoint2 = internalAngleFromPoint2;
+
+            foreach (uint lineKey in database.lines.Keys)
+            {
+                LineAdded(lineKey, database.lines[lineKey]);
+            }
         }
 
         protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>

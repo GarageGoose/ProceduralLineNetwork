@@ -16,10 +16,12 @@ namespace _2TestLineNet
             ObserveLineAngles lineAngle = new(ln.Storage);
             ObserveOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Storage);
             ObserveAngleBetweenLines abl = new(lineAngle, ln.Storage, lineOrder);
+            SortedAngles sortedAngles = new(lineAngle, lineAngle.UpdateLevel, ln.Storage);
 
             ln.AddObserver(lineAngle);
             ln.AddObserver(lineOrder);
             ln.AddObserver(abl);
+            ln.AddObserver(sortedAngles);
 
             uint pointKey1 = ln.AddPoint(0, 0);
             uint pointKey2 = ln.AddPoint(0, 1);
@@ -33,6 +35,15 @@ namespace _2TestLineNet
             Console.WriteLine(abl.fromPoint1[lineKey2]);
             Console.WriteLine(abl.fromPoint2[lineKey1]);
             Console.WriteLine(abl.fromPoint2[lineKey2]);
+
+            Console.WriteLine("---");
+
+            
+
+            foreach(float angle in sortedAngles.angles)
+            {
+                Console.WriteLine(angle);
+            }
         }
     }
 }
