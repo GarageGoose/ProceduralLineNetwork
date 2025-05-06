@@ -1,31 +1,35 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     /// <summary>
-    /// 
+    /// Tracks the order of lines arranged from 0 to 2pi radians or 360 degrees in a point.
     /// </summary>
     public class ObserveOrderOfLinesOnPoint : LineNetworkObserver
     {
         readonly ObserveLineAngles lineAngle;
         readonly ElementStorage database;
 
-        //Dict key: point key.
-        //SortedList key: line angle from the perspective of the current point.
-        //SortedList value: line key.
+        //Key:   Point key
+        //Value: Ordeed list of lines from a point
         private readonly Dictionary<uint, List<uint>> OrderedLinesOnPoint = new();
 
+        //Key:   Point key
+        //Value:
+        //       Key:   Line key
+        //       Value: Next line to the current line by angle
         private readonly Dictionary<uint, Dictionary<uint, uint>> internalNextLineToThis = new();
+
+        //Key:   Point key
+        //Value: 
+        //       Key:   Line key
+        //       Value: Last line to the current line by angle
         private readonly Dictionary<uint, Dictionary<uint, uint>> internalLastLineToThis = new();
 
-        public ObserveOrderOfLinesOnPoint(ObserveLineAngles lineAngle, ElementStorage database) : base(1, true)
+        public ObserveOrderOfLinesOnPoint(ObserveLineAngles lineAngle, ElementStorage database) : 
+        base(1, true, [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear])
         {
             this.lineAngle = lineAngle;
             this.database = database;
@@ -36,14 +40,43 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             }
         }
 
+        /// <summary>
+        /// Organised list of lines in a point from 0 to 2pi
+        /// </summary>
+        /// <param name="pointKey">Key of the target point.</param>
+        /// <returns>Read only list of lines in a point from 0 to 2pi</returns>
         public IReadOnlyList<uint> GetOrderOfLinesOnPoint(uint pointKey) => OrderedLinesOnPoint[pointKey];
+
+        /// <summary>
+        /// Dictionary that point to the key of the next line by angle in key. Key is the current line then value is the next line.
+        /// </summary>
+        /// <param name="pointKey">Key of the target point.</param>
+        /// <returns>Readonly dictionary that point to the key of the next line by angle in key. Key is the current line then value is the next line.</returns>
         public IReadOnlyDictionary<uint, uint> NextLineOfALineOnAPointDict(uint pointKey) => internalNextLineToThis[pointKey];
-        public uint NextLineOfALine(uint pointKey, uint lineKey) => internalNextLineToThis[pointKey][lineKey];
+
+        /// <summary>
+        /// Dictionary that point to the key of the last line by angle in key. Key is the current line then value is the next line.
+        /// </summary>
+        /// <param name="pointKey">Key of the target point.</param>
+        /// <returns>Readonly dictionary that point to the key of the last line by angle in key. Key is the current line then value is the next line.</returns>
         public IReadOnlyDictionary<uint, uint> LastLineOfALineOnAPointDict(uint pointKey) => internalLastLineToThis[pointKey];
+
+        /// <summary>
+        /// Point to the next line of the current line (by its angle) in a point by its key.
+        /// </summary>
+        /// <param name="pointKey">Target point.</param>
+        /// <param name="lineKey">Target line.</param>
+        /// <returns>Key of the next line.</returns>
+        public uint NextLineOfALine(uint pointKey, uint lineKey) => internalNextLineToThis[pointKey][lineKey];
+
+        /// <summary>
+        /// Point to the line before the current line (by its angle) in a point by its key.
+        /// </summary>
+        /// <param name="pointKey">Target point.</param>
+        /// <param name="lineKey">Target line.</param>
+        /// <returns>Key of the line before the line.</returns>
         public uint LastLineOfALine(uint pointKey, uint lineKey) => internalLastLineToThis[pointKey][lineKey];
 
-        protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
-            [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
 
         //When the point is moved
         protected override void PointModified(uint key, Point before, Point after)

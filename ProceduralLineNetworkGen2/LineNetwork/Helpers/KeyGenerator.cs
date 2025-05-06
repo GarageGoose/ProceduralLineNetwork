@@ -7,7 +7,15 @@ using System.Threading.Tasks;
 
 namespace GarageGoose.ProceduralLineNetwork.Manager
 {
-    public class ElementKeyGenerator
+    public interface ILineNetworkKeyGen
+    {
+        public uint GenerateKey();
+    }
+
+    /// <summary>
+    /// Fastest key generator. No duplicate checks or overflow protection.
+    /// </summary>
+    public class FastKeyGen : ILineNetworkKeyGen
     {
         private uint Keys = 0;
         public uint GenerateKey()

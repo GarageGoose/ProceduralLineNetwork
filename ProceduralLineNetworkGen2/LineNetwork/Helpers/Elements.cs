@@ -1,10 +1,13 @@
-﻿using System.Numerics;
-
-namespace GarageGoose.ProceduralLineNetwork.Elements
+﻿namespace GarageGoose.ProceduralLineNetwork.Elements
 {
-
+    /// <summary>
+    /// Marker interface for the elements of a line network.
+    /// </summary>
     public interface ILineNetworkElement { }
 
+    /// <summary>
+    /// Represents a location in 2d space where a line could connect to it.
+    /// </summary>
     public class Point : ILineNetworkElement
     {
         public Point(float x, float y)
@@ -16,6 +19,9 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
         public float y;
     }
 
+    /// <summary>
+    /// Represents a connection between two points.
+    /// </summary>
     public class Line : ILineNetworkElement
     {
         public Line(uint pointKey1, uint pointKey2)
@@ -27,12 +33,18 @@ namespace GarageGoose.ProceduralLineNetwork.Elements
         public uint PointKey2;
     }
 
+    /// <summary>
+    /// An enum for identifiying the type of an element.
+    /// </summary>
     public enum ElementType
     {
         Point, Line, Unknown
     }
 
-    public enum LineAtPoint
+    /// <summary>
+    /// An enum for identifiying the specified end point of a line.
+    /// </summary>
+    public enum LineEndPoint
     {
         Point1, Point2
     }

@@ -40,12 +40,12 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         //Components sorted by update level, filtered by specific event subscribed to.
         //Key: Update level (See comment above)
         //Value: Hashset of observsers subscribed to the specific event.
-        public readonly Dictionary<ElementUpdateType, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToElementUpdate = new();
+        public readonly Dictionary<ObserverEvent, SortedList<uint, HashSet<LineNetworkObserver>>> ComponentsSubscribedToElementUpdate = new();
 
         public ObserverManagerSubscriptionStorage()
         {
             //Add all element update type since its very likely that atleast one element will subscribe to each element update type
-            foreach(ElementUpdateType type in Enum.GetValues(typeof(ElementUpdateType)))
+            foreach(ObserverEvent type in Enum.GetValues(typeof(ObserverEvent)))
             {
                 ComponentsSubscribedToElementUpdate.Add(type, new());
             }
@@ -73,12 +73,10 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         private void CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            Debug.WriteLine("g");
             if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
             {
                 foreach(LineNetworkObserver observer in e.NewItems!)
                 {
-                    Debug.WriteLine("s");
                     AddObserversToDb(observer);
 
                 }
@@ -94,9 +92,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         private void AddObserversToDb(LineNetworkObserver observer)
         {
-            if(observer.SubscribeToElementUpdates != null)
+            if(observer.eventSubscription != null)
             {
-                foreach (ElementUpdateType UpdateType in observer.SubscribeToElementUpdates)
+                foreach (ObserverEvent UpdateType in observer.eventSubscription)
                 {
                     database.ComponentsSubscribedToElementUpdate[UpdateType].TryAdd(observer.UpdateLevel, new());
                     database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Add(observer);
@@ -105,9 +103,9 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
         }
         private void RemoveObserversToDb(LineNetworkObserver observer)
         {
-            if (observer.SubscribeToElementUpdates != null)
+            if (observer.eventSubscription != null)
             {
-                foreach (ElementUpdateType UpdateType in observer.SubscribeToElementUpdates)
+                foreach (ObserverEvent UpdateType in observer.eventSubscription)
                 {
                     database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Remove(observer);
                     if (database.ComponentsSubscribedToElementUpdate[UpdateType][observer.UpdateLevel].Count == 0) 
@@ -130,24 +128,21 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             this.database = database;
         }
         //Element update
-        public void PointUpdateAdd(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointAddition], observer => observer.NotifyPointAdded(key, point));
-        public void PointUpdateModification(uint key, Point before, Point after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointModification], observer => observer.NotifyPointModified(key, before, after));
-        public void PointUpdateRemove(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointRemoval], observer => observer.NotifyPointRemoved(key, point));
-        public void PointUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnPointClear], observer => observer.NotifyPointClear());
-        public void LineUpdateAdd(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineAddition], observer => observer.NotifyLineAdded(key, line));
-        public void LineUpdateModification(uint key, Line before, Line after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineModification], observer => observer.NotifyLineModified(key, before, after));
-        public void LineUpdateRemove(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineRemoval], observer => observer.NotifyLineRemoved(key, line));
-        public void LineUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ElementUpdateType.OnLineClear], observer => observer.NotifyLineClear());
+        public void PointUpdateAdd(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.PointAdded], observer => observer.NotifyPointAdded(key, point));
+        public void PointUpdateModification(uint key, Point before, Point after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.PointModified], observer => observer.NotifyPointModified(key, before, after));
+        public void PointUpdateRemove(uint key, Point point) => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.PointRemoved], observer => observer.NotifyPointRemoved(key, point));
+        public void PointUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.PointClear], observer => observer.NotifyPointClear());
+        public void LineUpdateAdd(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.LineAdded], observer => observer.NotifyLineAdded(key, line));
+        public void LineUpdateModification(uint key, Line before, Line after) => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.LineModified], observer => observer.NotifyLineModified(key, before, after));
+        public void LineUpdateRemove(uint key, Line line) => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.LineRemoved], observer => observer.NotifyLineRemoved(key, line));
+        public void LineUpdateClear() => CallHandler(database.ComponentsSubscribedToElementUpdate[ObserverEvent.LineClear], observer => observer.NotifyLineClear());
 
-        private void CallHandler(SortedList<uint, HashSet<LineNetworkObserver>> list, Action<LineNetworkObserver> CallInstruction)
+        private void CallHandler(SortedList<uint, HashSet<LineNetworkObserver>> list, Action<ILineNetworkObserverCall> CallInstruction)
         {
-            Debug.WriteLine("o");
             foreach (HashSet<LineNetworkObserver> observersAtSameUpdateLevel in list.Values)
             {
-                Debug.WriteLine("found obs, 1");
                 foreach(LineNetworkObserver observer in observersAtSameUpdateLevel)
                 {
-                    Debug.WriteLine("found obs, 2: " + observer + ", " + CallInstruction);
                     CallInstruction(observer);
                 }
             }

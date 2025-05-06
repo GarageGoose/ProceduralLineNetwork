@@ -16,7 +16,7 @@ namespace _2TestLineNet
             ObserveLineAngles lineAngle = new(ln.Storage);
             ObserveOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Storage);
             ObserveAngleBetweenLines abl = new(lineAngle, ln.Storage, lineOrder);
-            SortedAngles sortedAngles = new(lineAngle, lineAngle.UpdateLevel, ln.Storage);
+            SortedAngles sortedAngles = new(lineAngle, ln.Storage);
 
             ln.AddObserver(lineAngle);
             ln.AddObserver(lineOrder);

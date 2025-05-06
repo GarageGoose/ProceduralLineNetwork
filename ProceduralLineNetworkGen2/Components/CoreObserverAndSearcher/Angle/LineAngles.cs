@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using GarageGoose.ProceduralLineNetwork.Component.Interface;
+﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
 
@@ -7,7 +6,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
 
     /// <summary>
-    /// 
+    /// Track the angle of a line from the perspective of Point1 and Point2
     /// </summary>
     public class ObserveLineAngles : LineNetworkObserver, ILineAngleTracker
     {
@@ -32,18 +31,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// </summary>
         public IReadOnlyDictionary<uint, float> fromPoint2 { get; }
 
-        protected override ElementUpdateType[]? SetSubscriptionToElementUpdates()
+        /// <summary>
+        /// Track the angle of a line from the perspective of Point1 and Point2
+        /// </summary>
+        /// <param name="storage">Storage of elements</param>
+        public ObserveLineAngles(ElementStorage storage) : base(0, true, [ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.PointModified])
         {
-            return [ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnPointModification];
-        }
-
-        public ObserveLineAngles(ElementStorage database) : base(0, true)
-        {
-            this.database = database;
+            this.database = storage;
             fromPoint1 = internalLineAngleFromPoint1;
             fromPoint2 = internalLineAngleFromPoint2;
 
-            foreach(uint lineKey in database.lines.Keys)
+            foreach(uint lineKey in storage.lines.Keys)
             {
                 LineAdded(lineKey, new(0, 0));
             }
@@ -111,10 +109,4 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         //Subtract pi if the angle is >pi else add pi to keep the angle from surpassing <0 and >2pi.
         private float InvertAngle(float Angle) => (Angle >= MathF.PI) ? Angle - MathF.PI : Angle + MathF.PI;
     }
-
-
-
-
-
-
 }

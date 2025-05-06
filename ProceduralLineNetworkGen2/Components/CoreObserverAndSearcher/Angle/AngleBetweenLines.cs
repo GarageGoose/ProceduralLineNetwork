@@ -1,16 +1,11 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     /// <summary>
-    /// 
+    /// Captures data for angles between lines (or spacing between lines) at a point.
     /// </summary>
     public class ObserveAngleBetweenLines : LineNetworkObserver, ILineAngleTracker
     {
@@ -34,10 +29,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// </summary>
         public IReadOnlyDictionary<uint, float> fromPoint2 { get; }
 
-        public ObserveAngleBetweenLines(ObserveLineAngles lineAngles, ElementStorage database, ObserveOrderOfLinesOnPoint orderOfLines) : base(2, true)
+        /// <summary>
+        /// Captures data for angles between lines (or spacing between lines) at a point.
+        /// </summary>
+        /// <param name="lineAngles">Oberver for line angles</param>
+        /// <param name="storage">Storage of lines and points</param>
+        /// <param name="orderOfLines">Observer for tracking the order of lines in a point</param>
+        public ObserveAngleBetweenLines(ObserveLineAngles lineAngles, ElementStorage storage, ObserveOrderOfLinesOnPoint orderOfLines) : 
+        base(2, true, [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear])
         {
             this.lineAngles = lineAngles;
-            this.database = database;
+            this.database = storage;
             this.orderOfLines = orderOfLines;
 
             internalAngleFromPoint1 = new();
@@ -46,14 +48,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             fromPoint1 = internalAngleFromPoint1;
             fromPoint2 = internalAngleFromPoint2;
 
-            foreach (uint lineKey in database.lines.Keys)
-            {
-                LineAdded(lineKey, database.lines[lineKey]);
-            }
+            //Add already existing lines
+            foreach (uint lineKey in storage.lines.Keys) LineAdded(lineKey, storage.lines[lineKey]);
         }
-
-        protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
-            [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
 
         protected override void PointModified(uint key, Point before, Point after)
         {

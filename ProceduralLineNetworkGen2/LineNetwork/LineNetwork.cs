@@ -22,7 +22,7 @@ namespace GarageGoose.ProceduralLineNetwork
         /// <summary>
         /// Generates unique keys for elements (Points and Lines). Used for identification.
         /// </summary>
-        public readonly ElementKeyGenerator KeyGenerator;
+        public readonly FastKeyGen KeyGenerator;
 
         public LineNetwork(bool MultithreadObservers, bool MultithreadSearching)
         {

@@ -5,10 +5,24 @@ using System.Xml.Linq;
 
 namespace GarageGoose.ProceduralLineNetwork.Manager
 {
+    /// <summary>
+    /// The main storage of a line network.
+    /// </summary>
     public class ElementStorage
     {
+        /// <summary>
+        /// A dictionary of points in the line network.
+        /// </summary>
         public readonly PointDict points;
+
+        /// <summary>
+        /// A dictionary of lines in the line network.
+        /// </summary>
         public readonly LineDict lines;
+
+        /// <summary>
+        /// A dictionary of a set which represents the connected lines on a specified point.
+        /// </summary>
         public readonly LinesOnPoint linesOnPoint = new();
 
         public ElementStorage(ObserverManager observer)

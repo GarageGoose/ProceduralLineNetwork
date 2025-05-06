@@ -1,36 +1,45 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Manager;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     /// <summary>
-    /// 
+    /// Angles of a line (from the perspective of Point1 and Point2) in the entire line network sorted by 0 to 2pi.  
     /// </summary>
     public class SortedAngles : LineNetworkObserver
     {
         private readonly ILineAngleTracker angleTracker;
         private readonly ElementStorage database;
 
-        private SortedAngleSet<Tuple<uint, LineAtPoint>> lineAngles = new();
+        private SortedAngleSet<Tuple<uint, LineEndPoint>> lineAngles = new();
 
+        /// <summary>
+        /// Sorted line angles (from the perspective of Point1 and Point2) of the entire line network.
+        /// Use <code>angleToPointKey</code> to determine which line it belongs (and also the perspective from <code>Point1</code> or <code>Point2</code>).
+        /// </summary>
         public readonly IReadOnlySet<float> angles;
-        public readonly IReadOnlyDictionary<float, Tuple<uint, LineAtPoint>> angleToPointKey;
 
-        public SortedAngles(ILineAngleTracker angleTracker, uint angleTrackerUpdateLevel, ElementStorage database) : base(angleTrackerUpdateLevel + 1, true)
+        /// <summary>
+        /// Angle to line (and the perspective from <code>Point1</code> or <code>Point2</code>) pointer.
+        /// </summary>
+        public readonly IReadOnlyDictionary<float, Tuple<uint, LineEndPoint>> angleToPointKey;
+
+        /// <summary>
+        /// Angles of a line (from the perspective of Point1 and Point2) in the entire line network sorted by 0 to 2pi.  
+        /// </summary>
+        /// <param name="angleTracker">Target angle tracker</param>
+        /// <param name="storage">Target element storage</param>
+        public SortedAngles(ILineAngleTracker angleTracker, ElementStorage storage) : 
+        base(((LineNetworkObserver)angleTracker).UpdateLevel + 1, true, [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear])
         {
             this.angleTracker = angleTracker;
-            this.database = database;
+            this.database = storage;
 
             angles = lineAngles.angles;
             angleToPointKey = lineAngles.angleToKey;
 
-            foreach (uint lineKey in database.lines.Keys)
+            foreach (uint lineKey in storage.lines.Keys)
             {
                 LineAdded(lineKey, new(0, 0));
             }
@@ -38,34 +47,31 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         public IReadOnlySet<float> GetViewBetween(float min, float max) => lineAngles.GetViewBetween(min, max);
 
-        protected override ElementUpdateType[]? SetSubscriptionToElementUpdates() =>
-              [ElementUpdateType.OnPointModification, ElementUpdateType.OnLineAddition, ElementUpdateType.OnLineModification, ElementUpdateType.OnLineRemoval, ElementUpdateType.OnLineClear];
-
         protected override void PointModified(uint key, Point before, Point after)
         {
             foreach (uint lineKey in database.linesOnPoint.linesOnPoint[key])
             {
-                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleTracker.fromPoint1[lineKey]);
-                lineAngles.Modify(new(lineKey, LineAtPoint.Point1), angleTracker.fromPoint1[lineKey]);
+                lineAngles.Modify(new(lineKey, LineEndPoint.Point1), angleTracker.fromPoint1[lineKey]);
+                lineAngles.Modify(new(lineKey, LineEndPoint.Point1), angleTracker.fromPoint1[lineKey]);
             }
         }
 
         protected override void LineAdded(uint key, Line line)
         {
-            lineAngles.Add(angleTracker.fromPoint1[key], new(key, LineAtPoint.Point1));
-            lineAngles.Add(angleTracker.fromPoint2[key], new(key, LineAtPoint.Point2));
+            lineAngles.Add(angleTracker.fromPoint1[key], new(key, LineEndPoint.Point1));
+            lineAngles.Add(angleTracker.fromPoint2[key], new(key, LineEndPoint.Point2));
         }
 
         protected override void LineModified(uint key, Line before, Line after)
         {
-            lineAngles.Modify(new(key, LineAtPoint.Point1), angleTracker.fromPoint1[key]);
-            lineAngles.Modify(new(key, LineAtPoint.Point2), angleTracker.fromPoint2[key]);
+            lineAngles.Modify(new(key, LineEndPoint.Point1), angleTracker.fromPoint1[key]);
+            lineAngles.Modify(new(key, LineEndPoint.Point2), angleTracker.fromPoint2[key]);
         }
 
         protected override void LineRemoved(uint key, Line line)
         {
-            lineAngles.Remove(new(key, LineAtPoint.Point1));
-            lineAngles.Remove(new(key, LineAtPoint.Point2));
+            lineAngles.Remove(new(key, LineEndPoint.Point1));
+            lineAngles.Remove(new(key, LineEndPoint.Point2));
         }
 
         protected override void LineClear()
