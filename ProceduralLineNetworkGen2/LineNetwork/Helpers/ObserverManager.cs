@@ -10,15 +10,15 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     /// </summary>
     public class ObserverManager
     {
-        public readonly ObservableCollection<LineNetworkObserver> observerComponents = new();
-        private readonly ObserverManagerSubscriptionStorage database = new();
-        private readonly ObserverManagerSubscriptionStorageHandler databaseHandler;
+        public readonly ObservableCollection<LineNetworkObserver> linkedObservers = new();
+        private readonly ObserverManagerSubscriptionStorage storage = new();
+        private readonly ObserverManagerSubscriptionStorageHandler storageHandler;
         internal readonly ObserverManagerCallHandler callHandler;
         readonly bool MultithreadObservers;
         public ObserverManager(bool multithreadObservers)
         {
-            callHandler = new(database);
-            databaseHandler = new(observerComponents, database, callHandler);
+            callHandler = new(storage);
+            storageHandler = new(linkedObservers, storage, callHandler);
             MultithreadObservers = multithreadObservers;
         }
     }
@@ -44,7 +44,6 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
 
         public ObserverManagerSubscriptionStorage()
         {
-            //Add all element update type since its very likely that atleast one element will subscribe to each element update type
             foreach(ObserverEvent type in Enum.GetValues(typeof(ObserverEvent)))
             {
                 ComponentsSubscribedToElementUpdate.Add(type, new());
@@ -57,7 +56,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     /// </summary>
     internal class ObserverManagerSubscriptionStorageHandler
     {
-        //Used for tracking added or removed observers to add their subscriptions to the database.
+        //Used for tracking added or removed observers to add their subscriptions to the storage.
         private readonly ObservableCollection<LineNetworkObserver> observers;
 
         private readonly ObserverManagerSubscriptionStorage database;

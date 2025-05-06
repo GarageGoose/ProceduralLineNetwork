@@ -23,4 +23,16 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             return Keys++;
         }
     }
+
+    /// <summary>
+    /// Fastest key generator for a multithreaded line network. No duplicate checks or overflow protection.
+    /// </summary>
+    public class FastMultithreadKeyGen : ILineNetworkKeyGen
+    {
+        private uint Keys = 0;
+        public uint GenerateKey()
+        {
+            return Interlocked.Increment(ref Keys);
+        }
+    }
 }

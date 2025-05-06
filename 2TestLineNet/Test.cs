@@ -1,6 +1,7 @@
 ﻿using GarageGoose.ProceduralLineNetwork;
 using GarageGoose.ProceduralLineNetwork.Elements;
 using GarageGoose.ProceduralLineNetwork.Component.Core;
+using GarageGoose.ProceduralLineNetwork.Component.Interface;
 namespace _2TestLineNet
 {
     internal class Test
@@ -18,10 +19,13 @@ namespace _2TestLineNet
             ObserveAngleBetweenLines abl = new(lineAngle, ln.Storage, lineOrder);
             SortedAngles sortedAngles = new(lineAngle, ln.Storage);
 
-            ln.AddObserver(lineAngle);
-            ln.AddObserver(lineOrder);
-            ln.AddObserver(abl);
-            ln.AddObserver(sortedAngles);
+            Notifier s = new();
+
+            ln.LinkObserver(lineAngle);
+            ln.LinkObserver(lineOrder);
+            ln.LinkObserver(abl);
+            ln.LinkObserver(sortedAngles);
+            ln.LinkObserver(s);
 
             uint pointKey1 = ln.AddPoint(0, 0);
             uint pointKey2 = ln.AddPoint(0, 1);
@@ -43,6 +47,21 @@ namespace _2TestLineNet
             foreach(float angle in sortedAngles.angles)
             {
                 Console.WriteLine(angle);
+            }
+        }
+
+        public class Notifier : LineNetworkObserver
+        {
+            public Notifier() : base(0, false, [ObserverEvent.LineAdded, ObserverEvent.PointAdded]) { }
+
+            protected override void LineAdded(uint key, Line newLine)
+            {
+                Console.WriteLine("NewLine!");
+            }
+
+            protected override void PointAdded(uint key, Point newPoint)
+            {
+                Console.WriteLine("NewPoint!");
             }
         }
     }

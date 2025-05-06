@@ -126,28 +126,28 @@ namespace GarageGoose.ProceduralLineNetwork
         public void DeletePoint(uint key) => Storage.points.Remove(key);
 
         /// <summary>
-        /// Add an observer to the line network.
+        /// Link an observer to the line network.
         /// An observer observes different specific parts of the line network and create data additional data from.
         /// </summary>
         /// <param name="observer">Observer to add.</param>
-        public void AddObserver(LineNetworkObserver observer) => Observer.observerComponents.Add(observer);
+        public void LinkObserver(LineNetworkObserver observer) => Observer.linkedObservers.Add(observer);
 
         /// <summary>
-        /// Add an observer to the line network.
+        /// Link an observer to the line network.
         /// An observer observes different specific parts of the line network and create data additional data from.
         /// </summary>
         /// <param name="observer">Observer to add.</param>
-        public TObserver AddObserver<TObserver>(TObserver observer) where TObserver : LineNetworkObserver
+        public TObserver LinkObserver<TObserver>(TObserver observer) where TObserver : LineNetworkObserver
         {
-            Observer.observerComponents.Add(observer);
+            Observer.linkedObservers.Add(observer);
             return observer;
         }
 
         /// <summary>
-        /// Remove an observer to the line network.
+        /// Unlink an observer to the line network. Do this before deleting the observer!
         /// An observer observes different specific parts of the line network and create data additional data from.
         /// </summary>
         /// <param name="observer">Observer instance to remove.</param>
-        public void RemoveObserver(LineNetworkObserver observer) => Observer.observerComponents.Remove(observer);
+        public void UnlinkObserver(LineNetworkObserver observer) => Observer.linkedObservers.Remove(observer);
     }
 }

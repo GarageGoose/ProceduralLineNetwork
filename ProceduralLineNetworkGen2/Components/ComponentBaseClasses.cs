@@ -67,7 +67,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyPointAdded(uint key, Point newPoint) => PointAdded(key, newPoint);
         /// <summary>
-        /// Triggers when a point is added to the database. Return <c>ObserverEvent.PointAdded</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when a point is added to the storage. Return <c>ObserverEvent.PointAdded</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         /// <param name="key">Point key of the new point.</param>
         /// <param name="newPoint">The new point itself.</param>
@@ -75,7 +75,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyPointModified(uint key, Point before, Point after) => PointModified(key, before, after);
         /// <summary>
-        /// Triggers when a point is modified in the database. Return <c>ObserverEvent.PointModified</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when a point is modified in the storage. Return <c>ObserverEvent.PointModified</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         /// <param name="key">Point key of the modified point.</param>
         /// <param name="before">The point itself before modification</param>
@@ -84,7 +84,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyPointRemoved(uint Key, Point oldPoint) => PointRemoved(Key, oldPoint);
         /// <summary>
-        /// Triggers when a point is remove in the database. Return <c>ObserverEvent.PointRemoved</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when a point is remove in the storage. Return <c>ObserverEvent.PointRemoved</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         /// <param name="Key">Key of the point to be removed.</param>
         /// <param name="oldPoint">The point itself</param>
@@ -92,13 +92,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyPointClear() => PointClear();
         /// <summary>
-        /// Triggers when the point database is cleared. Return <c>ObserverEvent.PointClear</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when the point storage is cleared. Return <c>ObserverEvent.PointClear</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         protected virtual void PointClear() { }
 
         void ILineNetworkObserverCall.NotifyLineAdded(uint key, Line newLine) => LineAdded(key, newLine);
         /// <summary>
-        /// Triggers when a line is added to the database. Return <c>ObserverEvent.LineAdded</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when a line is added to the storage. Return <c>ObserverEvent.LineAdded</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         /// <param name="key">Key of the new line</param>
         /// <param name="newLine">The new line itself</param>
@@ -106,7 +106,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyLineModified(uint key, Line before, Line after) => LineModified(key, before, after);
         /// <summary>
-        /// Triggers when a line is modified in the database. Return <c>ObserverEvent.LineModified</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when a line is modified in the storage. Return <c>ObserverEvent.LineModified</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         /// <param name="key">Key of the modified line</param>
         /// <param name="before">Line before modification</param>
@@ -115,7 +115,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyLineRemoved(uint Key, Line oldPoint) => LineRemoved(Key, oldPoint);
         /// <summary>
-        /// Triggers when a line is remove in the database. Return <c>ObserverEvent.LineRemoved</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when a line is remove in the storage. Return <c>ObserverEvent.LineRemoved</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         /// <param name="Key">Key of the line to be removed</param>
         /// <param name="oldPoint">The line itself</param>
@@ -123,7 +123,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 
         void ILineNetworkObserverCall.NotifyLineClear() => LineClear();
         /// <summary>
-        /// Triggers when the line database is cleared. Return <c>ObserverEvent.LineClear</c> on <c>SubscribedEvents</c> to use this.
+        /// Triggers when the line storage is cleared. Return <c>ObserverEvent.LineClear</c> on <c>SubscribedEvents</c> to use this.
         /// </summary>
         protected virtual void LineClear() { }
     }
