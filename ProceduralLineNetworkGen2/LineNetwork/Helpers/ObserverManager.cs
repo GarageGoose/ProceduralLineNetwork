@@ -10,7 +10,11 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     /// </summary>
     public class ObserverManager
     {
+        /// <summary>
+        /// Observers that listens to line network updates.
+        /// </summary>
         public readonly ObservableCollection<LineNetworkObserver> linkedObservers = new();
+
         private readonly ObserverManagerSubscriptionStorage storage = new();
         private readonly ObserverManagerSubscriptionStorageHandler storageHandler;
         internal readonly ObserverManagerCallHandler callHandler;

@@ -18,10 +18,7 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     public class FastKeyGen : ILineNetworkKeyGen
     {
         private uint Keys = 0;
-        public uint GenerateKey()
-        {
-            return Keys++;
-        }
+        public uint GenerateKey() => Keys++;
     }
 
     /// <summary>
@@ -30,9 +27,6 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
     public class FastMultithreadKeyGen : ILineNetworkKeyGen
     {
         private uint Keys = 0;
-        public uint GenerateKey()
-        {
-            return Interlocked.Increment(ref Keys);
-        }
+        public uint GenerateKey() => Interlocked.Increment(ref Keys);
     }
 }

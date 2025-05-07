@@ -31,24 +31,34 @@ namespace GarageGoose.ProceduralLineNetwork.Manager
             points = linesOnPoint.NewPointDict(observer, lines);
         }
 
-        public Type CheckElementType(uint Key)
+        /// <summary>
+        /// Check the element type of the line network by its key
+        /// </summary>
+        public ElementType CheckElementType(uint Key)
         {
-            if (points.ContainsKey(Key)) return Type.Point;
-            if (lines.ContainsKey(Key)) return Type.Line;
-            return Type.Unknown;
+            if (points.ContainsKey(Key)) return ElementType.Point;
+            if (lines.ContainsKey(Key)) return ElementType.Line;
+            return ElementType.Unknown;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lineKey"></param>
+        /// <returns></returns>
         public Point LinePoint1(uint lineKey)
         {
             return points[lines[lineKey].PointKey1];
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lineKey"></param>
+        /// <returns></returns>
         public Point LinePoint2(uint lineKey)
         {
             return points[lines[lineKey].PointKey2];
-        }
-        public enum Type
-        {
-            Point, Line, Unknown
         }
 
         public class PointDict : IDictionary<uint, Point>
