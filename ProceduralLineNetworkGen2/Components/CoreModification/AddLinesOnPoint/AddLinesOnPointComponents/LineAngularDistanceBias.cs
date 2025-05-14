@@ -14,9 +14,9 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint
             this.linePadding = linePadding;
         }
 
-        public NewLineBias GetLineAngularBias(uint pointKey, Point targetPoint)
+        public LineLengthBias GetLineAngularBias(uint pointKey, Point targetPoint)
         {
-            
+            return new(0, 0, 0);
         }
     }
 }
