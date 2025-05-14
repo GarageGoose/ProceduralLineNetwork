@@ -83,6 +83,24 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         CombinePrioritizeColliding
     }
 
+    public enum CollisionStatus
+    {
+        /// <summary>
+        /// No collision happned
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Only the edge of the segments is colliding
+        /// </summary>
+        Partial,
+
+        /// <summary>
+        /// One segment is inside of another
+        /// </summary>
+        Full,
+    }
+
     /// <summary>
     /// Interface for <code>AddLinesOnPoint</code> components for angular bias.
     /// </summary>

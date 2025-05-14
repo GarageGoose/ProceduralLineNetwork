@@ -17,7 +17,7 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
         /// <param name="lineKey">Current point's key</param>
         /// <param name="angle">Chosen angle</param>
         /// <returns>Determinedd line length bias</returns>
-        public LineLengthBias GetLineLengthBias(uint lineKey, Line TargetLine, float angle);
+        public LineLengthBiasSegment GetLineLengthBias(uint lineKey, Line TargetLine, float angle);
     }
 
     /// <summary>
@@ -34,7 +34,7 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
     /// <summary>
     /// Single segment line length bias for <code>LineLengthAngularBias</code>.
     /// </summary>
-    public class LineLengthBias
+    public class LineLengthBiasSegment
     {
         /// <summary>
         /// Bias segment midpoint.
@@ -57,7 +57,7 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
         /// <param name="bias">
         /// Bias intensity from -1 to 1. from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
         /// </param>
-        public LineLengthBias(float midpoint, float extention, float bias)
+        public LineLengthBiasSegment(float midpoint, float extention, float bias)
         {
             this.midpoint = midpoint;
             this.extention = extention;
@@ -66,7 +66,7 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
 
         /// <param name="endpoints">Leftmost and rightmost boundaries of a bias segment</param>
         /// <param name="bias">Bias intensity</param>
-        public LineLengthBias(Vector2 endpoints, float bias)
+        public LineLengthBiasSegment(Vector2 endpoints, float bias)
         {
             extention = (endpoints.Y - endpoints.X) / 2;
             midpoint = extention + endpoints.X;
@@ -82,9 +82,23 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
         /// <summary>
         /// Sorted set of line length bias segments
         /// </summary>
-        public readonly IReadOnlySet<LineLengthBias> lineBiases;
+        public readonly IReadOnlyList<LineLengthBiasSegment> lineBiases;
 
-        private SortedSet<LineLengthBias> internalLineBiases = new(Comparer<LineLengthBias>.Create((a, b) => a.midpoint.CompareTo(b.midpoint)));
+        private List<LineLengthBiasSegment> internalLineBiases = new();
+
+        private int LineBiasSegmentAdd(LineLengthBiasSegment segment)
+        {
+            for(int i = 0; i < internalLineBiases.Count; i++)
+            {
+                if (internalLineBiases[i].midpoint < segment.midpoint)
+                {
+                    internalLineBiases.Insert(i + 1, segment);
+                    return i + 1;
+                }
+            }
+            internalLineBiases.Add(segment);
+            return internalLineBiases.Count - 1;
+        }
 
         public LineLengthBiasAdvanced()
         {
@@ -96,29 +110,49 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
         /// </summary>
         /// <param name="Segment"></param>
         /// <param name="CollisionAction"></param>
-        public void Add(LineLengthBias Segment, BiasSegmentCollisionAction CollisionAction = BiasSegmentCollisionAction.AdjustToMidpoint)
+        public void Add(LineLengthBiasSegment Segment, BiasSegmentCollisionAction CollisionAction)
         {
+            int currSegmentIndex = LineBiasSegmentAdd(Segment);
+            bool LeftCollision;
+            bool RightCollision;
+            CheckCollision(currSegmentIndex, out LeftCollision, out RightCollision);
 
+            if (LeftCollision)
+            {
+                switch (CollisionAction)
+                {
+                    case BiasSegmentCollisionAction.Blend:
+
+                        break;
+
+                    case BiasSegmentCollisionAction.PrioritizeThis:
+
+                        break;
+
+                    case BiasSegmentCollisionAction.PrioritizeColliding:
+
+                        break;
+                }
+            }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="CurrSegmentLeft"></param>
-        /// <returns></returns>
-        public bool CheckCollisionLeft(float CurrSegmentLeft)
+        public void CheckCollision(int currSegmentIndex, out bool LeftCol, out bool RightCol)
         {
-            return false;
-        }
+            LineLengthBiasSegment CurrSegment = internalLineBiases[currSegmentIndex];
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="CurrSegmentRight"></param>
-        /// <returns></returns>
-        public bool CheckCollisionRight(float CurrSegmentRight)
-        {
-            return false;
+            if (currSegmentIndex < internalLineBiases.Count)
+            {
+                LineLengthBiasSegment SegmentAfter = internalLineBiases[currSegmentIndex + 1];
+                RightCol = (CurrSegment.midpoint + CurrSegment.extention) > (SegmentAfter.midpoint - SegmentAfter.extention);
+            }
+            else RightCol = false;
+
+            if (currSegmentIndex != 0)
+            {
+                LineLengthBiasSegment SegmentBefore = internalLineBiases[currSegmentIndex - 1];
+                LeftCol = (CurrSegment.midpoint - CurrSegment.extention) < (SegmentBefore.midpoint + SegmentBefore.extention); 
+            }
+            else LeftCol = false;
         }
     }
 }
