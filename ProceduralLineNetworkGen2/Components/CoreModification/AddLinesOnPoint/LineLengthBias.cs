@@ -3,6 +3,7 @@ using GarageGoose.ProceduralLineNetwork.Elements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,14 +37,14 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
     public class LineLengthBias
     {
         /// <summary>
-        /// Bias range starting point.
+        /// Bias segment midpoint.
         /// </summary>
-        public float from;
+        public float midpoint;
 
         /// <summary>
-        /// Bias range endpoint.
+        /// distance from the left and rightmost edges of a bias segment.
         /// </summary>
-        public float to;
+        public float extention;
 
         /// <summary>
         /// Bias intensity from -1 to 1. 
@@ -51,15 +52,24 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
         /// </summary>
         public float bias;
 
-        /// <param name="from">Bias range starting point.</param>
-        /// <param name="to">Bias range endpoint.</param>
+        /// <param name="midpoint">Bias segment midpoint.</param>
+        /// <param name="extention">Distance from the left and rightmost edges of a bias segment.</param>
         /// <param name="bias">
-        /// Bias from -1 to 1. from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
+        /// Bias intensity from -1 to 1. from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
         /// </param>
-        public LineLengthBias(float from, float to, float bias)
+        public LineLengthBias(float midpoint, float extention, float bias)
         {
-            this.from = from;
-            this.to = to;
+            this.midpoint = midpoint;
+            this.extention = extention;
+            this.bias = bias;
+        }
+
+        /// <param name="endpoints">Leftmost and rightmost boundaries of a bias segment</param>
+        /// <param name="bias">Bias intensity</param>
+        public LineLengthBias(Vector2 endpoints, float bias)
+        {
+            extention = (endpoints.Y - endpoints.X) / 2;
+            midpoint = extention + endpoints.X;
             this.bias = bias;
         }
     }
@@ -74,35 +84,11 @@ namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint.AddL
         /// </summary>
         public readonly IReadOnlySet<LineLengthBias> lineBiases;
 
-        private SortedSet<LineLengthBias> internalLineBiases = new();
+        private SortedSet<LineLengthBias> internalLineBiases = new(Comparer<LineLengthBias>.Create((a, b) => a.midpoint.CompareTo(b.midpoint)));
 
         public LineLengthBiasAdvanced()
         {
             lineBiases = internalLineBiases;
-        }
-
-        /// <summary>
-        /// Add a new segment
-        /// </summary>
-        /// <param name="Left"></param>
-        /// <param name="Right"></param>
-        /// <param name="Bias"></param>
-        /// <param name="CollisionAction"></param>
-        public void Add(float Left, float Right, float Bias, BiasSegmentCollisionAction CollisionAction = BiasSegmentCollisionAction.AdjustToMidpoint)
-        {
-
-        }
-
-        /// <summary>
-        /// Add a new segment
-        /// </summary>
-        /// <param name="Midpoint"></param>
-        /// <param name="Extention"></param>
-        /// <param name="Bias"></param>
-        /// <param name="CollisionAction"></param>
-        public void AddFromMidpoint(float Midpoint, float Extention, float Bias, BiasSegmentCollisionAction CollisionAction = BiasSegmentCollisionAction.AdjustToMidpoint)
-        {
-
         }
 
         /// <summary>
