@@ -1,7 +1,7 @@
 ﻿using GarageGoose.ProceduralLineNetwork.Component.Core;
 using GarageGoose.ProceduralLineNetwork.Elements;
 
-namespace ProceduralLineNetwork.Components.CoreModification.AddLinesOnPoint
+namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     public class LineAngularDistanceBias : IPointAngleBias
     {
