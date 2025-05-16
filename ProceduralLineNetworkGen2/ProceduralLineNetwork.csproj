@@ -12,8 +12,4 @@
     <None Remove="ComponentOutputInterfaces\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\CoreModification\AddLinesOnPoint\CollisionActions\" />
-  </ItemGroup>
-
 </Project>

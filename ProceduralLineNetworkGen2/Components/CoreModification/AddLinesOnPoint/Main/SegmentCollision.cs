@@ -19,53 +19,35 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// </summary>
     public class CollisionData
     {
-        /// <summary>
-        /// The main bias segment which this class is for.
-        /// </summary>
-        public BiasSegment currentSegment;
-
-        /// <summary>
-        /// Collision informarion on the left edge
-        /// </summary>
-        public CollisionStatus leftEdgeCollision = CollisionStatus.None;
-
-        /// <summary>
-        /// Bias segment before this
-        /// </summary>
-        public BiasSegment? segmentBefore;
-
-        /// <summary>
-        /// Collision information on the right edge
-        /// </summary>
-        public CollisionStatus rightEdgeCollision = CollisionStatus.None;
-
-        /// <summary>
-        /// Bias segment after this
-        /// </summary>
-        public BiasSegment? segmentAfter;
-
-        /// <summary>
-        /// Contains information on a bias segment collision
-        /// </summary>
-        /// <param name="currentSegment">The main bias segment which this class is for.</param>
-        public CollisionData(BiasSegment currentSegment) => this.currentSegment = currentSegment;
+        BiasSegment collidingSegment;
+        CollisionStatus collisionStatus;
+        public CollisionData(BiasSegment collidingSegment, CollisionStatus collisionStatus)
+        {
+            this.collidingSegment = collidingSegment;
+            this.collisionStatus = collisionStatus;
+        }
     }
 
     public enum CollisionStatus
     {
         /// <summary>
-        /// No collision happned
+        /// Only the left edge of the segment is colliding to the right edge of the colliding segment
         /// </summary>
-        None,
+        PartialToLeft,
 
         /// <summary>
-        /// Only the edge of the segments is colliding
+        /// Only the right edge of the segment is colliding to the left edge of the colliding segment
         /// </summary>
-        Partial,
+        PartialToRight,
 
         /// <summary>
         /// One segment is inside of another
         /// </summary>
         Full,
+
+        /// <summary>
+        /// No collision happned
+        /// </summary>
+        None
     }
 }

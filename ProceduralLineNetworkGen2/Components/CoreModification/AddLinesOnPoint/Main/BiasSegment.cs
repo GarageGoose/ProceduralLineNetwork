@@ -31,18 +31,23 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <summary>
         /// Bias segment midpoint.
         /// </summary>
-        public float midpoint;
+        public readonly float midpoint;
 
         /// <summary>
         /// distance from the left and rightmost edges of a bias segment.
         /// </summary>
-        public float extention;
+        public readonly float extention;
 
         /// <summary>
         /// Bias intensity from -1 to 1. 
         /// from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
         /// </summary>
-        public float bias;
+        public readonly float bias;
+
+        /// <summary>
+        /// Left and right endpoints.
+        /// </summary>
+        public BiasSegmentEndpoint endpoint;
 
         /// <param name="midpoint">Bias segment midpoint.</param>
         /// <param name="extention">Distance from the left and rightmost edges of a bias segment.</param>
@@ -54,15 +59,28 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             this.midpoint = midpoint;
             this.extention = extention;
             this.bias = bias;
+            endpoint = new(midpoint - extention, midpoint + extention);
         }
 
-        /// <param name="endpoints">Leftmost and rightmost boundaries of a bias segment</param>
+        /// <param name="endpoint">Leftmost and rightmost boundaries of a bias segment</param>
         /// <param name="bias">Bias intensity</param>
-        public BiasSegment(Vector2 endpoints, float bias)
+        public BiasSegment(BiasSegmentEndpoint endpoint, float bias)
         {
-            extention = (endpoints.Y - endpoints.X) / 2;
-            midpoint = extention + endpoints.X;
+            extention = (endpoint.right - endpoint.left) / 2;
+            midpoint = extention + endpoint.left;
             this.bias = bias;
+            this.endpoint = endpoint;
+        }
+    }
+
+    public class BiasSegmentEndpoint
+    {
+        public readonly float left;
+        public readonly float right;
+        public BiasSegmentEndpoint(float left, float right)
+        {
+            this.left = left;
+            this.right = right;
         }
     }
 
@@ -132,17 +150,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             //Check collision on the left edge
             if (currSegmentIndex != 0)
             {
-                collDat.segmentBefore = internalLineBiases[currSegmentIndex - 1];
+                collDat.precedingSegment = internalLineBiases[currSegmentIndex - 1];
 
                 //Check if the left edge of the current segment is less than the right edge of the segment before it. If so, they are partially colliding.
-                collDat.leftEdgeCollision = (collDat.currentSegment.midpoint - collDat.currentSegment.extention) < (collDat.segmentBefore.midpoint + collDat.segmentBefore.extention) 
+                collDat.leftEdgeCollision = collDat.currentSegment.endpoint.left < collDat.precedingSegment.endpoint.right
                     ? CollisionStatus.Partial : CollisionStatus.None;
 
                 //Check for full collision if a partial collision happned
                 if (collDat.leftEdgeCollision == CollisionStatus.Partial)
                 {
                     //Check if the left edge of the current segment is less than or equal to the left edge of the segment before it.
-                    collDat.leftEdgeCollision = (collDat.currentSegment.midpoint - collDat.currentSegment.extention) <= (collDat.segmentBefore.midpoint + collDat.segmentBefore.extention) 
+                    collDat.leftEdgeCollision = collDat.currentSegment.endpoint.left <= collDat.precedingSegment.endpoint.left
                         ? CollisionStatus.Full : CollisionStatus.Partial;
                 }
             }
@@ -155,17 +173,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             //Check collision on the right edge
             if (currSegmentIndex < internalLineBiases.Count)
             {
-                collDat.segmentAfter = internalLineBiases[currSegmentIndex + 1];
+                collDat.succeedingSegment = internalLineBiases[currSegmentIndex + 1];
 
                 //Check if the right edge of the current segment is more than the left edge of the segment after it. If so, they are partially colliding.
-                collDat.rightEdgeCollision = (collDat.currentSegment.midpoint + collDat.currentSegment.extention) > (collDat.segmentAfter.midpoint - collDat.segmentAfter.extention)
+                collDat.rightEdgeCollision = collDat.currentSegment.endpoint.right > collDat.succeedingSegment.endpoint.left
                     ? CollisionStatus.Partial : CollisionStatus.None;
 
                 //Check for full collision if a partial collision happned
                 if (collDat.rightEdgeCollision == CollisionStatus.Partial)
                 {
                     //Check if the right edge of the current segment is more than or equal to the right edge of the segment after it. If so, they are fully colliding.
-                    collDat.rightEdgeCollision = (collDat.currentSegment.midpoint + collDat.currentSegment.extention) >= (collDat.segmentAfter.midpoint + collDat.segmentAfter.extention)
+                    collDat.rightEdgeCollision = collDat.currentSegment.endpoint.right >= collDat.succeedingSegment.endpoint.right
                         ? CollisionStatus.Full : CollisionStatus.Partial;
                 }
             }
