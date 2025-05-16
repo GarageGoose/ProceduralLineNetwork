@@ -195,5 +195,45 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             return collDat;
         }
+
+        public List<CollisionData> CheckCollision2(int currSegmentIndex)
+        {
+            BiasSegment current = internalLineBiases[currSegmentIndex];
+            List<CollisionData> collDat = new();
+
+            //Check preceding bias segments
+            for(int i = currSegmentIndex - 1; i >= 0; i--)
+            {
+                //Check if the right side of the colliding bias segment is greater than
+                //the left side of the current bias segment (L = left edge, R = right edge)
+                //L-------R     <- Colliding bias segment
+                //    L-------R <- Current bias segment
+                if (internalLineBiases[i].endpoint.right > internalLineBiases[currSegmentIndex].endpoint.left)
+                {
+                    //Check if the left side of the colliding bias segment is greater than
+                    //the left side of the current bias segment (L = left edge, R = right edge)
+                    //L-----------R <- Current bias segment
+                    //  L-----R     <- Colliding bias segment
+                    if (internalLineBiases[i].endpoint.left >= internalLineBiases[currSegmentIndex].endpoint.left)
+                    {
+                        collDat.Add(new(internalLineBiases[i], CollisionStatus.Full));
+                    }
+                    else
+                    {
+                        collDat.Add(new(internalLineBiases[i], CollisionStatus.PartialToLeft));
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            //Check succeeding bias segments
+            for(int i = currSegmentIndex + 1; i < internalLineBiases.Count; i++)
+            {
+
+            }
+        }
     }
 }
