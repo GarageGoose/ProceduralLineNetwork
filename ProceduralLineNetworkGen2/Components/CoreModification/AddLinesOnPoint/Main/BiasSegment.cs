@@ -49,7 +49,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// Bias intensity from -1 to 1. 
         /// from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
         /// </summary>
-        public readonly float bias;
+        public float bias;
 
         /// <summary>
         /// Left and right endpoints.
@@ -94,7 +94,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Hold and handles multiple line length bias segments for <code>LineLengthAngularBias</code>.
     /// </summary>
-    public class BiasSegmentSortedCollision : IBiasSegmentContainer
+    public class BiasSegmentSortedContainer
     {
         /// <summary>
         /// Sorted set of line length bias segments
@@ -102,23 +102,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         public readonly IReadOnlyList<BiasSegment> lineBiases;
 
         private List<BiasSegment> internalLineBiases = new();
+        private Comparer<BiasSegment> lineBiasesComparer = Comparer<BiasSegment>.Create((a, b) => a.midpoint.CompareTo(b.midpoint));
 
-        //Check if the midpoint at index is less than the current segment midpoint then inser it at i + 1.
-        private int BiasSegmentAdd(BiasSegment segment)
+        private int SortedAdd(BiasSegment Segment)
         {
-            for(int i = 0; i < internalLineBiases.Count; i++)
-            {
-                if (internalLineBiases[i].midpoint < segment.midpoint)
-                {
-                    internalLineBiases.Insert(i + 1, segment);
-                    return i + 1;
-                }
-            }
-            internalLineBiases.Add(segment);
-            return internalLineBiases.Count - 1;
+            int index = internalLineBiases.BinarySearch(Segment, lineBiasesComparer);
+            index = index < 0 ? index * -1 : index;
+            internalLineBiases.Insert(index, Segment);
+            return index;
         }
 
-        public BiasSegmentSortedCollision()
+        public BiasSegmentSortedContainer()
         {
             lineBiases = internalLineBiases;
         }
@@ -130,7 +124,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <param name="CollisionAction"></param>
         public void Add(BiasSegment Segment, IBiasSegmentCollisionAction? collisionAction = null)
         {
-            int currSegmentIndex = BiasSegmentAdd(Segment);
+            int currSegmentIndex = internalLineBiases.BinarySearch(Segment, lineBiasesComparer);
+            internalLineBiases.Insert(currSegmentIndex, Segment);
 
             if(collisionAction == null)
             {
@@ -159,11 +154,21 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             foreach(BiasSegment bSeg in cFix.newSegments)
             {
-                BiasSegmentAdd(bSeg);
+                SortedAdd(bSeg);
             }
         }
 
         public void ResolveCollision(IBiasSegmentCollisionAction collisionAction)
+        {
+
+        }
+
+        public void Remove(int index)
+        {
+
+        }
+        
+        public void Remove(BiasSegment segment)
         {
 
         }
@@ -201,21 +206,5 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             return collDat;
         }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class BiasSegmentCuttable : IBiasSegmentContainer
-    {
-
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class BiasSegmentCuttableMultipleVal : IBiasSegmentContainer
-    {
-
     }
 }
