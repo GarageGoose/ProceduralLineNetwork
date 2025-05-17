@@ -20,8 +20,15 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         public IBiasSegmentContainer GetLineLengthBias(uint lineKey, Line TargetLine, float angle);
     }
 
+    public interface IBiasSegment
+    {
 
-    public interface IBiasSegmentContainer { }
+    }
+
+    public interface IBiasSegmentContainer
+    {
+
+    }
 
     /// <summary>
     /// Single segment line length bias for <code>LineLengthAngularBias</code>.
