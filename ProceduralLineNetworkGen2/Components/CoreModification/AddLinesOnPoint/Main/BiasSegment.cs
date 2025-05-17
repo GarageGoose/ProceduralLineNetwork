@@ -130,110 +130,64 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
                 return;
             }
 
-            CollisionData collDat = CheckCollision(currSegmentIndex);
+            List<CollisionData> cData = CheckCollision(currSegmentIndex, out int precedingColCount, out int succeedingColCount);
+            CollisionFix cFix = collisionAction.CollisionAction(cData);
 
-            //Check if any collision happened
-            if((collDat.leftEdgeCollision != CollisionStatus.None || collDat.rightEdgeCollision != CollisionStatus.None))
+            if (cFix.removeCurrentSegment)
             {
                 internalLineBiases.RemoveAt(currSegmentIndex);
-                foreach (BiasSegment biasSegment in collisionAction.CollisionAction(collDat))
+            }
+
+            if (cFix.removeCollidingSegments)
+            {
+                for (int i = precedingColCount; i > 0; i--)
                 {
-                    BiasSegmentAdd(biasSegment);
+                    internalLineBiases.RemoveAt(currSegmentIndex - precedingColCount);
                 }
+                for (int i = succeedingColCount; i > 0; i--)
+                {
+                    internalLineBiases.RemoveAt(currSegmentIndex - (cFix.removeCurrentSegment ? 0 : 1));
+                }
+            }
+
+            foreach(BiasSegment bSeg in cFix.newSegments)
+            {
+                //todo
             }
         }
 
-        public CollisionData CheckCollision(int currSegmentIndex)
-        {
-            CollisionData collDat = new CollisionData(internalLineBiases[currSegmentIndex]);
-
-            //Check collision on the left edge
-            if (currSegmentIndex != 0)
-            {
-                collDat.precedingSegment = internalLineBiases[currSegmentIndex - 1];
-
-                //Check if the left edge of the current segment is less than the right edge of the segment before it. If so, they are partially colliding.
-                collDat.leftEdgeCollision = collDat.currentSegment.endpoint.left < collDat.precedingSegment.endpoint.right
-                    ? CollisionStatus.Partial : CollisionStatus.None;
-
-                //Check for full collision if a partial collision happned
-                if (collDat.leftEdgeCollision == CollisionStatus.Partial)
-                {
-                    //Check if the left edge of the current segment is less than or equal to the left edge of the segment before it.
-                    collDat.leftEdgeCollision = collDat.currentSegment.endpoint.left <= collDat.precedingSegment.endpoint.left
-                        ? CollisionStatus.Full : CollisionStatus.Partial;
-                }
-            }
-            else
-            {
-                //No collision happned on the left edge of the current segment since it is the last segment.
-                collDat.leftEdgeCollision = CollisionStatus.None;
-            }
-
-            //Check collision on the right edge
-            if (currSegmentIndex < internalLineBiases.Count)
-            {
-                collDat.succeedingSegment = internalLineBiases[currSegmentIndex + 1];
-
-                //Check if the right edge of the current segment is more than the left edge of the segment after it. If so, they are partially colliding.
-                collDat.rightEdgeCollision = collDat.currentSegment.endpoint.right > collDat.succeedingSegment.endpoint.left
-                    ? CollisionStatus.Partial : CollisionStatus.None;
-
-                //Check for full collision if a partial collision happned
-                if (collDat.rightEdgeCollision == CollisionStatus.Partial)
-                {
-                    //Check if the right edge of the current segment is more than or equal to the right edge of the segment after it. If so, they are fully colliding.
-                    collDat.rightEdgeCollision = collDat.currentSegment.endpoint.right >= collDat.succeedingSegment.endpoint.right
-                        ? CollisionStatus.Full : CollisionStatus.Partial;
-                }
-            }
-            else
-            {
-                //No collision happned on the right edge of the current segment since it is the last segment.
-                collDat.rightEdgeCollision = CollisionStatus.None;
-            }
-
-            return collDat;
-        }
-
-        public List<CollisionData> CheckCollision2(int currSegmentIndex)
+        public List<CollisionData> CheckCollision(int currSegmentIndex, out int precedingSegmentsCollided, out int succeedingSegmentsCollided)
         {
             BiasSegment current = internalLineBiases[currSegmentIndex];
             List<CollisionData> collDat = new();
 
+            CollisionCheck collision = new();
+
             //Check preceding bias segments
             for(int i = currSegmentIndex - 1; i >= 0; i--)
             {
-                //Check if the right side of the colliding bias segment is greater than
-                //the left side of the current bias segment (L = left edge, R = right edge)
-                //L-------R     <- Colliding bias segment
-                //    L-------R <- Current bias segment
-                if (internalLineBiases[i].endpoint.right > internalLineBiases[currSegmentIndex].endpoint.left)
-                {
-                    //Check if the left side of the colliding bias segment is greater than
-                    //the left side of the current bias segment (L = left edge, R = right edge)
-                    //L-----------R <- Current bias segment
-                    //  L-----R     <- Colliding bias segment
-                    if (internalLineBiases[i].endpoint.left >= internalLineBiases[currSegmentIndex].endpoint.left)
-                    {
-                        collDat.Add(new(internalLineBiases[i], CollisionStatus.Full));
-                    }
-                    else
-                    {
-                        collDat.Add(new(internalLineBiases[i], CollisionStatus.PartialToLeft));
-                    }
-                }
-                else
+                CollisionData collCheck = collision.CheckCollision(current, internalLineBiases[i]);
+                if(collCheck.collisionStatus == CollisionStatus.None)
                 {
                     break;
                 }
+                collDat.Add(collCheck);
             }
+            precedingSegmentsCollided = collDat.Count;
 
             //Check succeeding bias segments
             for(int i = currSegmentIndex + 1; i < internalLineBiases.Count; i++)
             {
-
+                CollisionData collCheck = collision.CheckCollision(current, internalLineBiases[i]);
+                if (collCheck.collisionStatus == CollisionStatus.None)
+                {
+                    break;
+                }
+                collDat.Add(collCheck);
             }
+            succeedingSegmentsCollided = collDat.Count - precedingSegmentsCollided;
+
+            return collDat;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// </summary>
     public interface IBiasSegmentCollisionAction
     {
-        BiasSegment[] CollisionAction(CollisionData collisionData);
+        CollisionFix CollisionAction(List<CollisionData> collisionData);
     }
 
     /// <summary>
@@ -39,17 +39,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     {
         public IEnumerable<BiasSegment> newSegments;
         public bool removeCurrentSegment;
-        public bool removeCollidingSegment;
-        public CollisionFix(IEnumerable<BiasSegment> newSegments, bool removeCurrentSegment, bool removeCollidingSegment)
+        public bool removeCollidingSegments;
+        public CollisionFix(IEnumerable<BiasSegment> newSegments, bool removeCurrentSegment, bool removeCollidingSegments)
         {
             this.newSegments = newSegments;
             this.removeCurrentSegment = removeCurrentSegment;
-            this.removeCollidingSegment = removeCollidingSegment;
+            this.removeCollidingSegments = removeCollidingSegments;
         }
     }
 
     /// <summary>
-    /// 
+    /// Provides information if and how both segments overlapped
     /// </summary>
     public enum CollisionStatus
     {
@@ -85,20 +85,47 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     }
 
     /// <summary>
-    /// 
+    /// Additional data if the two edges of a segment is aligned for edge case scenarios
     /// </summary>
     public enum CollisionAlignment
     {
+        /// <summary>
+        /// Left edge of both segments is aligned
+        /// </summary>
+        //L-----R
+        //L---R
         BothSegmentEqualToLeft,
 
+        /// <summary>
+        /// Right edge of both segments is aligned
+        /// </summary>
+        //L-----R
+        //  L---R
         BothSegmentEqualToRight,
 
+        /// <summary>
+        /// Left edge of the current segment aligns with the right edge of the colliding segment
+        /// </summary>
+        //    L---R <- Current
+        //L---R     <- Colliding
         CurrentLeftAlignsToCollidingRight,
 
+        /// <summary>
+        /// Right edge of the current segment aligns with the left edge of the colliding segment
+        /// </summary>
+        //L---R     <- Current
+        //    L---R <- Colliding
         CurrentRightAlignsToCollidingLeft,
 
+        /// <summary>
+        /// Both edge of both segments are equal
+        /// </summary>
+        //L---R
+        //L---R
         BothSidesEqual,
 
+        //L---R
+        //  L---R
         NoAlignment
     }
 
