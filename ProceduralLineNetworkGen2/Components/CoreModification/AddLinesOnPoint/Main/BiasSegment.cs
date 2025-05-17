@@ -73,7 +73,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
     }
 
-    public class BiasSegmentEndpoint
+    public struct BiasSegmentEndpoint
     {
         public readonly float left;
         public readonly float right;
@@ -87,7 +87,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Hold and handles multiple line length bias segments for <code>LineLengthAngularBias</code>.
     /// </summary>
-    public class LineLengthBiasAdvanced : IBiasSegmentContainer
+    public class BiasSegmentSortedCollision : IBiasSegmentContainer
     {
         /// <summary>
         /// Sorted set of line length bias segments
@@ -111,7 +111,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             return internalLineBiases.Count - 1;
         }
 
-        public LineLengthBiasAdvanced()
+        public BiasSegmentSortedCollision()
         {
             lineBiases = internalLineBiases;
         }
@@ -152,8 +152,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             foreach(BiasSegment bSeg in cFix.newSegments)
             {
-                //todo
+                BiasSegmentAdd(bSeg);
             }
+        }
+
+        public void ResolveCollision(IBiasSegmentCollisionAction collisionAction)
+        {
+
         }
 
         public List<CollisionData> CheckCollision(int currSegmentIndex, out int precedingSegmentsCollided, out int succeedingSegmentsCollided)
@@ -189,5 +194,21 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             return collDat;
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class BiasSegmentCuttable : IBiasSegmentContainer
+    {
+
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class BiasSegmentCuttableMultipleVal : IBiasSegmentContainer
+    {
+
     }
 }
