@@ -8,29 +8,29 @@
     /// <summary>
     /// Represents a location in 2d space where a line could connect to it.
     /// </summary>
-    public class Point : ILineNetworkElement
+    public struct Point : ILineNetworkElement
     {
         public Point(float x, float y)
         {
             this.x = x;
             this.y = y;
         }
-        public float x;
-        public float y;
+        public readonly float x;
+        public readonly float y;
     }
 
     /// <summary>
     /// Represents a connection between two points.
     /// </summary>
-    public class Line : ILineNetworkElement
+    public struct Line : ILineNetworkElement
     {
         public Line(uint pointKey1, uint pointKey2)
         {
-            this.PointKey1 = pointKey1;
-            this.PointKey2 = pointKey2;
+            PointKey1 = pointKey1;
+            PointKey2 = pointKey2;
         }
-        public uint PointKey1;
-        public uint PointKey2;
+        public readonly uint PointKey1;
+        public readonly uint PointKey2;
     }
 
     /// <summary>

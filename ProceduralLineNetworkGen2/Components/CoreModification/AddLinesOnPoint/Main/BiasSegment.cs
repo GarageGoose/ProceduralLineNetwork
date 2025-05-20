@@ -4,57 +4,77 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
+
     /// <summary>
-    /// Interface for <code>AddLinesOnPoint</code> components for line length bias.
+    /// Marker interface for IBiasSegmentSingle and IBiasSegmentContainer
     /// </summary>
-    public interface IBiasSegmentComponent
+    public interface IBiasSegment { }
+
+    /// <summary>
+    /// Interface for a bias segment.
+    /// </summary>
+    public interface IBiasSegmentSingle
     {
-        /// <param name="lineKey">Current point's key</param>
-        /// <param name="angle">Chosen angle</param>
-        /// <returns>Determinedd line length bias</returns>
-        public IBiasSegmentContainer GetLineLengthBias(uint lineKey, Line TargetLine, float angle);
+        /// <summary>
+        /// Single segment line length bias for <code>LineLengthAngularBias</code>.
+        /// </summary>
+        public float Midpoint { get; }
+
+        /// <summary>
+        /// Distance from the left and rightmost edges of a bias segment.
+        /// </summary>
+        public float Extention { get; }
+        /// <summary>
+        /// Bias intensity from -1 to 1. 
+        /// from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
+        /// </summary>
+        public float Bias { get; set; }
+
+        /// <summary>
+        /// Left and right endpoints.
+        /// </summary>
+        public BiasSegmentEndpoint Endpoint { get; }
     }
 
-    public interface IBiasSegment
-    {
-
-    }
-
+    /// <summary>
+    /// Interface for holding many bias segments.
+    /// </summary>
     public interface IBiasSegmentContainer
     {
-
+        public IEnumerable<IBiasSegmentSingle> GetBiasSegments();
     }
 
     /// <summary>
     /// Single segment line length bias for <code>LineLengthAngularBias</code>.
     /// </summary>
-    public class BiasSegment : IBiasSegmentContainer
+    public class BiasSegment : IBiasSegmentSingle
     {
         /// <summary>
         /// Bias segment midpoint.
         /// </summary>
-        public readonly float midpoint;
+        public float Midpoint { get; }
 
         /// <summary>
-        /// distance from the left and rightmost edges of a bias segment.
+        /// Distance from the left and rightmost edges of a bias segment.
         /// </summary>
-        public readonly float extention;
+        public float Extention { get; }
 
         /// <summary>
         /// Bias intensity from -1 to 1. 
         /// from the value being inside the bias range at 1, being twice as likely to be in the bias range at 0.5, to being outside the bias range at -1.
         /// </summary>
-        public float bias;
+        public float Bias { get; set; }
 
         /// <summary>
         /// Left and right endpoints.
         /// </summary>
-        public BiasSegmentEndpoint endpoint;
+        public BiasSegmentEndpoint Endpoint { get; }
 
         /// <param name="midpoint">Bias segment midpoint.</param>
         /// <param name="extention">Distance from the left and rightmost edges of a bias segment.</param>
@@ -63,20 +83,20 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// </param>
         public BiasSegment(float midpoint, float extention, float bias)
         {
-            this.midpoint = midpoint;
-            this.extention = extention;
-            this.bias = bias;
-            endpoint = new(midpoint - extention, midpoint + extention);
+            Midpoint = midpoint;
+            Extention = extention;
+            Bias = bias;
+            Endpoint = new(midpoint - extention, midpoint + extention);
         }
 
         /// <param name="endpoint">Leftmost and rightmost boundaries of a bias segment</param>
         /// <param name="bias">Bias intensity</param>
         public BiasSegment(BiasSegmentEndpoint endpoint, float bias)
         {
-            extention = (endpoint.right - endpoint.left) / 2;
-            midpoint = extention + endpoint.left;
-            this.bias = bias;
-            this.endpoint = endpoint;
+            Extention = (endpoint.right - endpoint.left) / 2;
+            Midpoint = Extention + endpoint.left;
+            Bias = bias;
+            Endpoint = endpoint;
         }
     }
 
@@ -94,7 +114,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Hold and handles multiple line length bias segments for <code>LineLengthAngularBias</code>.
     /// </summary>
-    public class BiasSegmentSortedContainer
+    public class BiasSegmentContainer : IBiasSegmentContainer
     {
         /// <summary>
         /// Sorted set of line length bias segments
@@ -102,17 +122,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         public readonly IReadOnlyList<BiasSegment> lineBiases;
 
         private List<BiasSegment> internalLineBiases = new();
-        private Comparer<BiasSegment> lineBiasesComparer = Comparer<BiasSegment>.Create((a, b) => a.midpoint.CompareTo(b.midpoint));
+        private Comparer<BiasSegment> lineBiasesComparer = Comparer<BiasSegment>.Create((a, b) => a.Midpoint.CompareTo(b.Midpoint));
 
         private int SortedAdd(BiasSegment Segment)
         {
             int index = internalLineBiases.BinarySearch(Segment, lineBiasesComparer);
-            index = index < 0 ? index * -1 : index;
+            index = index < 0 ? ~index : index;
             internalLineBiases.Insert(index, Segment);
             return index;
         }
 
-        public BiasSegmentSortedContainer()
+        public BiasSegmentContainer()
         {
             lineBiases = internalLineBiases;
         }
@@ -124,67 +144,64 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <param name="CollisionAction"></param>
         public void Add(BiasSegment Segment, IBiasSegmentCollisionAction? collisionAction = null)
         {
-            int currSegmentIndex = internalLineBiases.BinarySearch(Segment, lineBiasesComparer);
-            internalLineBiases.Insert(currSegmentIndex, Segment);
-
             if(collisionAction == null)
             {
+                SortedAdd(Segment);
                 return;
             }
 
-            List<CollisionData> cData = CheckCollision(currSegmentIndex, out int precedingColCount, out int succeedingColCount);
-            CollisionFix cFix = collisionAction.CollisionAction(cData);
+            //Get the index of the new segment if it would be in internalLineBiases.
+            int currSegmentIndex = internalLineBiases.BinarySearch(Segment, lineBiasesComparer);
 
-            if (cFix.removeCurrentSegment)
+            //If the midpoint of the new index dosent match any other midpoints in the list, it returns the bitwise negative index. This line of code corrects it.
+            currSegmentIndex = currSegmentIndex < 0 ? ~currSegmentIndex : currSegmentIndex;
+
+            //Check for segment overlap
+            List<CollisionData> cData = CheckCollision(currSegmentIndex, Segment, out int precedingColCount, out int succeedingColCount);
+
+            if(cData.Count == 0)
             {
-                internalLineBiases.RemoveAt(currSegmentIndex);
+                internalLineBiases.Insert(currSegmentIndex, Segment);
             }
-
-            if (cFix.removeCollidingSegments)
+            else
             {
-                for (int i = precedingColCount; i > 0; i--)
+                CollisionFix cFix = collisionAction.CollisionAction(cData);
+
+                if (cFix.addCurrentSegment)
                 {
-                    internalLineBiases.RemoveAt(currSegmentIndex - precedingColCount);
+                    internalLineBiases.RemoveAt(currSegmentIndex);
                 }
-                for (int i = succeedingColCount; i > 0; i--)
+
+                if (cFix.removeCollidingSegments)
                 {
-                    internalLineBiases.RemoveAt(currSegmentIndex - (cFix.removeCurrentSegment ? 0 : 1));
+                    for (int i = precedingColCount; i > 0; i--)
+                    {
+                        internalLineBiases.RemoveAt(currSegmentIndex - precedingColCount);
+                    }
+                    for (int i = succeedingColCount; i > 0; i--)
+                    {
+                        internalLineBiases.RemoveAt(currSegmentIndex - (cFix.addCurrentSegment ? 0 : 1));
+                    }
+                }
+
+                foreach (BiasSegment bSeg in cFix.newSegments)
+                {
+                    SortedAdd(bSeg);
                 }
             }
-
-            foreach(BiasSegment bSeg in cFix.newSegments)
-            {
-                SortedAdd(bSeg);
-            }
         }
 
-        public void ResolveCollision(IBiasSegmentCollisionAction collisionAction)
+        private List<CollisionData> CheckCollision(int currSegmentIndex, BiasSegment current, out int precedingSegmentsCollided, out int succeedingSegmentsCollided)
         {
-
-        }
-
-        public void Remove(int index)
-        {
-
-        }
-        
-        public void Remove(BiasSegment segment)
-        {
-
-        }
-
-        public List<CollisionData> CheckCollision(int currSegmentIndex, out int precedingSegmentsCollided, out int succeedingSegmentsCollided)
-        {
-            BiasSegment current = internalLineBiases[currSegmentIndex];
             List<CollisionData> collDat = new();
 
             CollisionCheck collision = new();
 
             //Check preceding bias segments
-            for(int i = currSegmentIndex - 1; i >= 0; i--)
+            for (int i = currSegmentIndex - 1; i >= 0; i--)
             {
                 CollisionData collCheck = collision.CheckCollision(current, internalLineBiases[i]);
-                if(collCheck.collisionStatus == CollisionStatus.None)
+                if (collCheck.collisionStatus == CollisionStatus.None)
                 {
                     break;
                 }
@@ -193,7 +210,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             precedingSegmentsCollided = collDat.Count;
 
             //Check succeeding bias segments
-            for(int i = currSegmentIndex + 1; i < internalLineBiases.Count; i++)
+            for (int i = currSegmentIndex + 1; i < internalLineBiases.Count; i++)
             {
                 CollisionData collCheck = collision.CheckCollision(current, internalLineBiases[i]);
                 if (collCheck.collisionStatus == CollisionStatus.None)
@@ -205,6 +222,131 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             succeedingSegmentsCollided = collDat.Count - precedingSegmentsCollided;
 
             return collDat;
+        }
+
+        public IEnumerable<IBiasSegmentSingle> GetBiasSegments() => internalLineBiases;
+
+        /// <summary>
+        /// Check and resolve pre-existing bias segment collisions. This is inefficient at O(n*n)
+        /// </summary>
+        /// <param name="collisionAction"></param>
+        public void ResolveCollision(IBiasSegmentCollisionAction collisionAction)
+        {
+
+        }
+
+        /// <summary>
+        /// Remove a segment at index
+        /// </summary>
+        public void RemoveAt(int index)
+        {
+
+        }
+        
+        /// <summary>
+        /// Remove a segment
+        /// </summary>
+        public void Remove(BiasSegment segment)
+        {
+
+        }
+
+        /// <summary>
+        /// Adjust segment edge at both direction
+        /// </summary>
+        public void AdjustSegmentEdge(int segmentIndex, float newLeftBounds, float newRightBounds)
+        {
+
+        }
+
+        /// <summary>
+        /// Adjust the left edge of a segment
+        /// </summary>
+        public void AdjustSegmentEdgeLeft(int segmentIndex, float newLeftBounds)
+        {
+
+        }
+
+        /// <summary>
+        /// Adjust the right edge of a segment
+        /// </summary>
+        public void AdjustSegmentEdgeRight(int segmentIndex, float newRightBounds)
+        {
+
+        }
+
+        /// <summary>
+        /// Split a segment
+        /// </summary>
+        /// <param name="splitAt"></param>
+        /// <returns>True if the operation is successful. Otherwise false.</returns>
+        public bool SplitSegment(int segmentIndex, float splitAt)
+        {
+
+        }
+
+        /// <summary>
+        /// Split a segment with a gap
+        /// </summary>
+        /// <param name="splitAt"></param>
+        /// <param name="splitGapBothDirection"></param>
+        /// <returns>True if the operation is successful. Otherwise false.</returns>
+        public bool SplitSegment(int segmentIndex, float splitAt, float splitGapBothDirection)
+        {
+
+        }
+    }
+
+    /// <summary>
+    /// Hold and handles multiple line length bias segments with the same bias value. More performant than BiasSegmentContainer
+    /// </summary>
+    public class BiasSegmentContainerSingleValue : IBiasSegmentContainer
+    {
+        public IReadOnlyList<BiasSegmentEndpoint> endpoints;
+        public float biasValue;
+        private static endpointComparerNoCollision endpointComparer = new();
+        private List<BiasSegmentEndpoint> internalEndpoints = new();
+
+        public BiasSegmentContainerSingleValue(float biasValue)
+        {
+            endpoints = internalEndpoints;
+            this.biasValue = biasValue;
+        }
+
+        public void AddByEdges(float leftEdge, float rightEdge)
+        {
+            
+        }
+
+        public void AddByMidpoint(float midpoint, float extentionBothEdges)
+        {
+
+        }
+
+        public void RemoveByEdges(float leftEdge, float rightEdge)
+        {
+
+        }
+
+        public void RemoveByMidpoint(float midpoint, float extentionBothEdges)
+        {
+
+        }
+
+        public int[] BinarySegmentSearch(float leftEdge, float rightEdge)
+        {
+
+        }
+
+        public IEnumerable<IBiasSegmentSingle> GetBiasSegments()
+        {
+            BiasSegment[] biasSegments = new BiasSegment[endpoints.Count];
+            int index = 0;
+            foreach(BiasSegmentEndpoint endpoint in endpoints)
+            {
+                biasSegments[index++] = new(endpoint, biasValue);
+            }
+            return biasSegments;
         }
     }
 }

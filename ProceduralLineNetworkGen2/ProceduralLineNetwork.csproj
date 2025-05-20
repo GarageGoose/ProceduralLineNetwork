@@ -12,4 +12,8 @@
     <None Remove="ComponentOutputInterfaces\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\CoreModification\QuadTree\Main\" />
+  </ItemGroup>
+
 </Project>

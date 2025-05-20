@@ -42,7 +42,16 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
     }
 
-
+    /// <summary>
+    /// Interface for <code>AddLinesOnPoint</code> components for line length bias.
+    /// </summary>
+    public interface IBiasSegmentComponent
+    {
+        /// <param name="lineKey">Current point's key</param>
+        /// <param name="angle">Chosen angle</param>
+        /// <returns>Determinedd line length bias</returns>
+        public IBiasSegment GetLineLengthBias(uint lineKey, Line TargetLine, float angle);
+    }
 
 
 

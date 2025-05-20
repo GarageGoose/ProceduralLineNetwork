@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
     /// <summary>
@@ -21,12 +14,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// </summary>
     public class CollisionData
     {
-        public readonly BiasSegment collidingSegment;
+        public readonly BiasSegment? collidingSegment;
         public readonly CollisionStatus collisionStatus;
-        public readonly CollisionAlignment? alignmentStatus;
-        public CollisionData(BiasSegment collidingSegment, CollisionStatus collisionStatus, CollisionAlignment collisionAlignment = CollisionAlignment.NoAlignment)
+        public readonly CollisionAlignment alignmentStatus;
+        public CollisionData(CollisionStatus collisionStatus, CollisionAlignment collisionAlignment = CollisionAlignment.NoAlignment)
         {
-            this.collidingSegment = collidingSegment;
             this.collisionStatus = collisionStatus;
             alignmentStatus = collisionAlignment;
         }
@@ -38,12 +30,12 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     public class CollisionFix
     {
         public IEnumerable<BiasSegment> newSegments;
-        public bool removeCurrentSegment;
+        public bool addCurrentSegment;
         public bool removeCollidingSegments;
         public CollisionFix(IEnumerable<BiasSegment> newSegments, bool removeCurrentSegment, bool removeCollidingSegments)
         {
             this.newSegments = newSegments;
-            this.removeCurrentSegment = removeCurrentSegment;
+            this.addCurrentSegment = removeCurrentSegment;
             this.removeCollidingSegments = removeCollidingSegments;
         }
     }
@@ -79,9 +71,22 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         Equal,
 
         /// <summary>
-        /// No collision happned
+        /// No overalap, colliding segment is to the left of the current segment. Also considered no overlap if only the edges overlapped (Check CollisionAlignment if that happned).
         /// </summary>
-        None
+        //Eg.
+        //L---R
+        //    L---R 
+        //    ^ Considered no overlap even if the edges overlap
+        NoneCollidingAtLeft,
+
+        /// <summary>
+        /// No overalap, colliding segment is to the right of the current segment. Also considered no overlap if only the edges overlapped (Check CollisionAlignment if that happned).
+        /// </summary>
+        //Eg.
+        //L---R
+        //    L---R 
+        //    ^ Considered no overlap even if the edges overlap
+        NoneCollidingAtRight
     }
 
     /// <summary>
@@ -137,11 +142,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <param name="current"></param>
         /// <param name="colliding"></param>
         /// <returns></returns>
-        public CollisionData CheckCollision(BiasSegment current, BiasSegment colliding)
+        public CollisionData CheckCollision(BiasSegmentEndpoint current, BiasSegmentEndpoint colliding)
         {
             //More lightweight than the builtin CompareTo
-            CompVal rightToRight = CompareValue(current.endpoint.right, colliding.endpoint.right);
-            CompVal leftToLeft = CompareValue(current.endpoint.left, colliding.endpoint.left);
+            CompVal rightToRight = CompareValue(current.right, colliding.right);
+            CompVal leftToLeft = CompareValue(current.left, colliding.left);
 
             //Less readable but more efficient, comments is provided to improve readability (hopefully)
             //L----------------R  <- Bias segment
@@ -149,64 +154,64 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             return (leftToLeft, rightToRight) switch
             {
                 //Check collision on the right edge of the current segment to the left edge of the current segment
-                (CompVal.Less, CompVal.Less) => CompareValue(current.endpoint.right, colliding.endpoint.left) switch
+                (CompVal.Less, CompVal.Less) => CompareValue(current.right, colliding.left) switch
                 {
                     //L---R         <- Current bias segment
                     //        L---R <- Colliding bias segment
-                    CompVal.Less => new(colliding, CollisionStatus.None),
+                    CompVal.Less => new(CollisionStatus.NoneCollidingAtRight),
 
                     //L----R    <- Current bias segment
                     //   L----R <- Colliding bias segment
-                    CompVal.More => new(colliding, CollisionStatus.PartialToRight),
+                    CompVal.More => new(CollisionStatus.PartialToRight),
 
                     //L----R      <- Current bias segment
                     //     L----R <- Colliding bias segment
-                    _ => new(colliding, CollisionStatus.PartialToRight, CollisionAlignment.CurrentRightAlignsToCollidingLeft)
+                    _ => new(CollisionStatus.NoneCollidingAtRight, CollisionAlignment.CurrentRightAlignsToCollidingLeft)
                 },
 
                 //L-------R <- Current bias segment
                 //  L---R   <- Colliding bias segment
-                (CompVal.Less, CompVal.More) => new(colliding, CollisionStatus.CollidingWithinCurrent),
+                (CompVal.Less, CompVal.More) => new(CollisionStatus.CollidingWithinCurrent),
 
                 //L-------R <- Current bias segment
                 //  L-----R <- Colliding bias segment
-                (CompVal.Less, CompVal.Equal) => new(colliding, CollisionStatus.CollidingWithinCurrent, CollisionAlignment.BothSegmentEqualToRight),
+                (CompVal.Less, CompVal.Equal) => new(CollisionStatus.CollidingWithinCurrent, CollisionAlignment.BothSegmentEqualToRight),
 
                 //  L---R   <- Current bias segment
                 //L-------R <- Colliding bias segment
-                (CompVal.More, CompVal.Less) => new(colliding, CollisionStatus.CurrentWithinColliding),
+                (CompVal.More, CompVal.Less) => new(CollisionStatus.CurrentWithinColliding),
 
                 //Check collision on the left edge of the current segment to the right edge of the colliding segment
-                (CompVal.More, CompVal.More) => CompareValue(current.endpoint.left, colliding.endpoint.right) switch
+                (CompVal.More, CompVal.More) => CompareValue(current.left, colliding.right) switch
                 {
                     //  L----R <- Current bias segment
                     //L----R   <- Colliding bias segment
-                    CompVal.Less => new(colliding, CollisionStatus.PartialToLeft),
+                    CompVal.Less => new(CollisionStatus.PartialToLeft),
 
                     //        L---R <- Current bias segment
                     //L---R         <- Colliding bias segment
-                    CompVal.More => new(colliding, CollisionStatus.None),
+                    CompVal.More => new(CollisionStatus.NoneCollidingAtLeft),
 
                     //     L----R <- Current bias segment
                     //L----R      <- Colliding bias segment
-                    _ => new(colliding, CollisionStatus.PartialToLeft, CollisionAlignment.CurrentLeftAlignsToCollidingRight)
+                    _ => new(CollisionStatus.NoneCollidingAtLeft, CollisionAlignment.CurrentLeftAlignsToCollidingRight)
                 },
 
                 //  L-----R <- Current bias segment
                 //L-------R <- Colliding bias segment
-                (CompVal.More, CompVal.Equal) => new(colliding, CollisionStatus.PartialToRight, CollisionAlignment.BothSegmentEqualToRight),
+                (CompVal.More, CompVal.Equal) => new(CollisionStatus.PartialToRight, CollisionAlignment.BothSegmentEqualToRight),
 
                 //L-----R   <- Current bias segment
                 //L-------R <- Colliding bias segment
-                (CompVal.Equal, CompVal.Less) => new(colliding, CollisionStatus.CurrentWithinColliding, CollisionAlignment.BothSegmentEqualToLeft),
+                (CompVal.Equal, CompVal.Less) => new(CollisionStatus.CurrentWithinColliding, CollisionAlignment.BothSegmentEqualToLeft),
 
                 //L--------R <- Current bias segment
                 //L------R   <- Colliding bias segment
-                (CompVal.Equal, CompVal.More) => new(colliding, CollisionStatus.CollidingWithinCurrent, CollisionAlignment.BothSegmentEqualToLeft),
+                (CompVal.Equal, CompVal.More) => new(CollisionStatus.CollidingWithinCurrent, CollisionAlignment.BothSegmentEqualToLeft),
 
                 //L------R <- Current bias segment
                 //L------R <- Colliding bias segment
-                _ => new(colliding, CollisionStatus.Equal, CollisionAlignment.BothSidesEqual)
+                _ => new(CollisionStatus.Equal, CollisionAlignment.BothSidesEqual)
             };
         }
 
@@ -222,4 +227,45 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             Equal, Less, More
         }
     }
+
+    /// <summary>
+    /// Custom comparer for bias segment endpoints. -1 is less than, 0 if colliding with each other, then 1 is more than.
+    /// </summary>
+    public class endpointComparerNoCollision : IComparer<BiasSegmentEndpoint>
+    {
+        private CollisionCheck colCheck = new();
+        public int Compare(BiasSegmentEndpoint x, BiasSegmentEndpoint y)
+        {
+            CollisionData colDat = colCheck.CheckCollision(x, y);
+            return colDat.collisionStatus switch
+            {
+                (CollisionStatus.NoneCollidingAtLeft) => colDat.alignmentStatus switch
+                {
+                    //       L---R <- Current (x)
+                    //L---R        <- Colliding (y)
+                    (CollisionAlignment.NoAlignment) => 1,
+
+                    //    L---R <- Current (x)
+                    //L---R     <- Colliding (y)
+                    _ => 0
+                },
+
+                (CollisionStatus.NoneCollidingAtRight) => colDat.alignmentStatus switch
+                {
+                    //L---R        <- Current (x)
+                    //       L---R <- Colliding (y)
+                    (CollisionAlignment.NoAlignment) => -1,
+
+                    //L---R     <- Current (x)
+                    //    L---R <- Colliding (y)
+                    _ => 0
+                },
+
+                //Any other current and colliding segment collision
+                _ => 0
+            };
+        }
+    }
+
+
 }
