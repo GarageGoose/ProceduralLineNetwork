@@ -200,8 +200,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             //Check preceding bias segments
             for (int i = currSegmentIndex - 1; i >= 0; i--)
             {
-                CollisionData collCheck = collision.CheckCollision(current, internalLineBiases[i]);
-                if (collCheck.collisionStatus == CollisionStatus.None)
+                CollisionData collCheck = collision.CheckCollision(current.Endpoint, internalLineBiases[i].Endpoint);
+                if (collCheck.collisionStatus == CollisionStatus.NoneCollidingAtLeft || collCheck.collisionStatus == CollisionStatus.NoneCollidingAtRight)
                 {
                     break;
                 }
@@ -212,8 +212,8 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             //Check succeeding bias segments
             for (int i = currSegmentIndex + 1; i < internalLineBiases.Count; i++)
             {
-                CollisionData collCheck = collision.CheckCollision(current, internalLineBiases[i]);
-                if (collCheck.collisionStatus == CollisionStatus.None)
+                CollisionData collCheck = collision.CheckCollision(current.Endpoint, internalLineBiases[i].Endpoint);
+                if (collCheck.collisionStatus == CollisionStatus.NoneCollidingAtRight || collCheck.collisionStatus == CollisionStatus.NoneCollidingAtLeft)
                 {
                     break;
                 }
@@ -313,29 +313,85 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             this.biasValue = biasValue;
         }
 
-        public void AddByEdges(float leftEdge, float rightEdge)
+        public void AddSegment(float leftEdge, float rightEdge)
         {
-            
+            int collidingSegmentLeftmost = BinarySearch(leftEdge, out bool locationInSegmentLeft);
+            int collidingSegmentRightmost = BinarySearch(rightEdge, out bool locationInSegmentRight);
+
+            if (collidingSegmentLeftmost + 1 < collidingSegmentRightmost)
+            {
+                for (int i = collidingSegmentLeftmost + 1; i < collidingSegmentRightmost; i++)
+                {
+                    internalEndpoints.RemoveAt(collidingSegmentLeftmost + 1);
+                }
+            }
+
+            if(collidingSegmentLeftmost == collidingSegmentRightmost)
+            {
+                if (locationInSegmentLeft)
+                {
+                    BiasSegmentEndpoint currEndpoint = endpoints[collidingSegmentLeftmost];
+                    bool adjustLeftEndpoint = currEndpoint.left > leftEdge;
+                    bool adjustRightEndpoint = currEndpoint.right < rightEdge;
+                    if (adjustLeftEndpoint || adjustRightEndpoint)
+                    {
+                        internalEndpoints[collidingSegmentLeftmost] = new(adjustLeftEndpoint ? leftEdge : currEndpoint.left, adjustRightEndpoint ? rightEdge : currEndpoint.right);
+                    }
+                    return;
+                }
+                internalEndpoints.Insert(collidingSegmentLeftmost + 1, new(leftEdge, rightEdge));
+                return;
+            }
+
+            collidingSegmentRightmost = collidingSegmentLeftmost + 1;
+
+            float newSegmentLeftmost = MathF.Min(endpoints[collidingSegmentLeftmost].left, leftEdge);
+            float newSegmentRightmost = MathF.Max(endpoints[collidingSegmentRightmost].right, rightEdge);
+
+            internalEndpoints[collidingSegmentLeftmost] = new(newSegmentLeftmost, newSegmentRightmost);
+            internalEndpoints.RemoveAt(collidingSegmentRightmost);
         }
 
-        public void AddByMidpoint(float midpoint, float extentionBothEdges)
+        public void RemoveSegment(float leftEdge, float rightEdge)
         {
 
         }
-
-        public void RemoveByEdges(float leftEdge, float rightEdge)
+   
+        public int BinarySearch(float location, out bool locationInSegment)
         {
-
+            int min = 0;
+            int max = internalEndpoints.Count() - 1;
+            int mid = 0;
+            while(min <= max)
+            {
+                mid = min + (int)MathF.Floor((max - min) / 2);
+                if (internalEndpoints[mid].right < location)
+                {
+                    min = mid + 1;
+                }
+                else if(internalEndpoints[mid].left > location)
+                {
+                    min = max - 1;
+                }
+                else
+                {
+                    locationInSegment = true;
+                    return mid;
+                }
+            }
+            locationInSegment = false;
+            return mid;
         }
-
-        public void RemoveByMidpoint(float midpoint, float extentionBothEdges)
+        public int[] BinarySearchRange(float leftEdge, float rightEdge)
         {
-
-        }
-
-        public int[] BinarySegmentSearch(float leftEdge, float rightEdge)
-        {
-
+            int min = BinarySearch(leftEdge, out bool locInSegLeft);
+            int max = BinarySearch(rightEdge, out bool locInSegRight);
+            int[] segmentsInRange = new int[max - min];
+            for (int i = min; i <= max; i++)
+            {
+                segmentsInRange[i - min] = i;
+            }
+            return segmentsInRange;
         }
 
         public IEnumerable<IBiasSegmentSingle> GetBiasSegments()
