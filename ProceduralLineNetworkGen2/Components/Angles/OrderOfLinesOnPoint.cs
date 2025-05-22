@@ -7,7 +7,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Tracks the order of lines arranged from 0 to 2pi radians or 360 degrees in a point.
     /// </summary>
-    public class ObserveOrderOfLinesOnPoint : LineNetworkObserver
+    public class ObserveOrderOfLinesOnPoint : ILineNetObserver
     {
         readonly ObserveLineAngles lineAngle;
         readonly ElementStorage database;
@@ -17,26 +17,29 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         private readonly Dictionary<uint, List<uint>> OrderedLinesOnPoint = new();
 
         //Key:   Point key
-        //Value:
-        //       Key:   Line key
+        //Value: Key:   Line key
         //       Value: Next line to the current line by angle
         private readonly Dictionary<uint, Dictionary<uint, uint>> internalNextLineToThis = new();
 
         //Key:   Point key
-        //Value: 
-        //       Key:   Line key
+        //Value: Key:   Line key
         //       Value: Last line to the current line by angle
         private readonly Dictionary<uint, Dictionary<uint, uint>> internalLastLineToThis = new();
 
-        public ObserveOrderOfLinesOnPoint(ObserveLineAngles lineAngle, ElementStorage database) : 
-        base(1, true, [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear])
+        public ObserverEvent[] eventSubscription => [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear];
+
+        public uint UpdateLevel => 1;
+
+        public bool Multithread => true;
+
+        public ObserveOrderOfLinesOnPoint(ObserveLineAngles lineAngle, ElementStorage database)
         {
             this.lineAngle = lineAngle;
             this.database = database;
 
             foreach (uint lineKey in database.lines.Keys)
             {
-                LineAdded(lineKey, database.lines[lineKey]);
+                ((ILineNetObserver)this).LineAdded(lineKey, database.lines[lineKey]);
             }
         }
 
@@ -79,7 +82,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
 
         //When the point is moved
-        protected override void PointModified(uint key, Point before, Point after)
+        void ILineNetObserver.PointModified(uint key, Point before, Point after)
         {
             if (!OrderedLinesOnPoint.ContainsKey(key)) { return; }
             OrderedLinesOnPoint[key].Clear();
@@ -88,14 +91,14 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
                 InsertLine(key, lineKey);
             }
         }
-        protected override void LineAdded(uint key, Line line)
+        void ILineNetObserver.LineAdded(uint key, Line line)
         {
             InsertLine(line.PointKey1, key);
             InsertLine(line.PointKey2, key);
         }
 
         //When the line changed its connected point(s).
-        protected override void LineModified(uint key, Line before, Line after)
+        void ILineNetObserver.LineModified(uint key, Line before, Line after)
         {
             if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
@@ -106,12 +109,12 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
                 InsertLine(after.PointKey2, key);
             }
         }
-        protected override void LineRemoved(uint key, Line line)
+        void ILineNetObserver.LineRemoved(uint key, Line line)
         {
             DeleteLine(line.PointKey1, key);
             DeleteLine(line.PointKey2, key);
         }
-        protected override void LineClear()
+        void ILineNetObserver.LineClear()
         {
             OrderedLinesOnPoint.Clear();
             internalLastLineToThis.Clear();

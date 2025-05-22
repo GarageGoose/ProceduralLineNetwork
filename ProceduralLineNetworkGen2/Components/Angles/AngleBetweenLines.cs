@@ -7,7 +7,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Captures data for angles between lines (or spacing between lines) at a point.
     /// </summary>
-    public class ObserveAngleBetweenLines : LineNetworkObserver, ILineAngleTracker
+    public class ObserveAngleBetweenLines : ILineNetObserver, ILineAngleTracker
     {
         private readonly ObserveLineAngles lineAngles;
         private readonly ObserveOrderOfLinesOnPoint orderOfLines;
@@ -29,14 +29,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// </summary>
         public IReadOnlyDictionary<uint, float> fromPoint2 { get; }
 
+        public ObserverEvent[] eventSubscription => [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear];
+        public uint UpdateLevel => 2;
+        public bool Multithread => true;
+
         /// <summary>
         /// Captures data for angles between lines (or spacing between lines) at a point.
         /// </summary>
         /// <param name="lineAngles">Oberver for line angles</param>
         /// <param name="storage">Storage of lines and points</param>
         /// <param name="orderOfLines">Observer for tracking the order of lines in a point</param>
-        public ObserveAngleBetweenLines(ObserveLineAngles lineAngles, ElementStorage storage, ObserveOrderOfLinesOnPoint orderOfLines) : 
-        base(2, true, [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear])
+        public ObserveAngleBetweenLines(ObserveLineAngles lineAngles, ElementStorage storage, ObserveOrderOfLinesOnPoint orderOfLines)
         {
             this.lineAngles = lineAngles;
             this.database = storage;
@@ -49,10 +52,12 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             fromPoint2 = internalAngleFromPoint2;
 
             //Add already existing lines
-            foreach (uint lineKey in storage.lines.Keys) LineAdded(lineKey, storage.lines[lineKey]);
+            foreach (uint lineKey in storage.lines.Keys) ((ILineNetObserver)this).LineAdded(lineKey, storage.lines[lineKey]);
         }
 
-        protected override void PointModified(uint key, Point before, Point after)
+
+
+        void ILineNetObserver.PointModified(uint key, Point before, Point after)
         {
             foreach (uint lineKey in database.linesOnPoint.linesOnPoint[key])
             {
@@ -60,7 +65,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
                 internalAngleFromPoint2[lineKey] = CalcAngleBetweenLinesOnCurrLinePoint2(lineKey, database.lines[lineKey]);
             }
         }
-        protected override void LineAdded(uint key, Line line)
+        void ILineNetObserver.LineAdded(uint key, Line line)
         {
             internalAngleFromPoint1.Add(key, CalcAngleBetweenLinesOnCurrLinePoint1(key, line));
             uint lineKeyBeforeCurrLineFromPoint1 = orderOfLines.LastLineOfALine(line.PointKey1, key);
@@ -71,7 +76,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalAngleFromPoint1[lineKeyBeforeCurrLineFromPoint2] = CalcAngleBetweenLinesOnCurrLinePoint1(lineKeyBeforeCurrLineFromPoint2, database.lines[lineKeyBeforeCurrLineFromPoint2]);
 
         }
-        protected override void LineModified(uint key, Line before, Line after)
+        void ILineNetObserver.LineModified(uint key, Line before, Line after)
         {
             if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
@@ -79,12 +84,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
                 internalAngleFromPoint2[key] = CalcAngleBetweenLinesOnCurrLinePoint2(key, after);
             }
         }
-        protected override void LineRemoved(uint key, Line line)
+        void ILineNetObserver.LineRemoved(uint key, Line line)
         {
             internalAngleFromPoint1.Remove(key);
             internalAngleFromPoint2.Remove(key);
         }
-        protected override void LineClear()
+
+        void ILineNetObserver.LineClear()
         {
             internalAngleFromPoint1.Clear();
             internalAngleFromPoint2.Clear();

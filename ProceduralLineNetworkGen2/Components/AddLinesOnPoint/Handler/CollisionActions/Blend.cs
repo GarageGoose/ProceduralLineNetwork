@@ -7,6 +7,7 @@ using System.Numerics;
 
 namespace GarageGoose.ProceduralLineNetwork.Component.Core
 {
+    /*
     public class BiasCollisionBlend : IBiasSegmentCollisionAction
     {
         public BiasSegment[] CollisionAction(CollisionData collDat)
@@ -59,5 +60,5 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             }
         }
-    }
+    }*/
 }

@@ -8,7 +8,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Track the angle of a line from the perspective of Point1 and Point2
     /// </summary>
-    public class ObserveLineAngles : LineNetworkObserver, ILineAngleTracker
+    public class ObserveLineAngles : ILineNetObserver, ILineAngleTracker
     {
         public bool ThreadSafeDataAccess { get; } = true;
 
@@ -31,11 +31,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// </summary>
         public IReadOnlyDictionary<uint, float> fromPoint2 { get; }
 
+        public ObserverEvent[] eventSubscription => [ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.PointModified];
+
+        public uint UpdateLevel => 0;
+
+        public bool Multithread => true;
+
         /// <summary>
         /// Track the angle of a line from the perspective of Point1 and Point2
         /// </summary>
         /// <param name="storage">Storage of elements</param>
-        public ObserveLineAngles(ElementStorage storage) : base(0, true, [ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.PointModified])
+        public ObserveLineAngles(ElementStorage storage)
         {
             this.database = storage;
             fromPoint1 = internalLineAngleFromPoint1;
@@ -43,11 +49,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             foreach(uint lineKey in storage.lines.Keys)
             {
-                LineAdded(lineKey, new(0, 0));
+                ((ILineNetObserver)this).LineAdded(lineKey, new(0, 0));
             }
         }
 
-        protected override void PointModified(uint key, Point before, Point after)
+        void ILineNetObserver.PointModified(uint key, Point before, Point after)
         {
             foreach(uint lineKey in database.linesOnPoint.linesOnPoint[key])
             {
@@ -59,7 +65,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             }
         }
 
-        protected override void LineAdded(uint key, Line newLine)
+        void ILineNetObserver.LineAdded(uint key, Line newLine)
         {
             Console.WriteLine("called: " + key);
             float Point1Angle = CalcAngle(database.LinePoint1(key), database.LinePoint2(key));
@@ -69,7 +75,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             internalLineAngleFromPoint2.Add(key, InvertAngle(Point1Angle));
         }
 
-        protected override void LineModified(uint key, Line before, Line after)
+        void ILineNetObserver.LineModified(uint key, Line before, Line after)
         {
             if (before.PointKey1 != after.PointKey1 || before.PointKey2 != after.PointKey2)
             {
@@ -82,13 +88,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             }
         }
 
-        protected override void LineRemoved(uint Key, Line oldPoint)
+        void ILineNetObserver.LineRemoved(uint Key, Line oldPoint)
         {
             internalLineAngleFromPoint1.Remove(Key);
             internalLineAngleFromPoint2.Remove(Key);
         }
 
-        protected override void LineClear()
+        void ILineNetObserver.LineClear()
         {
             internalLineAngleFromPoint1.Clear();
             internalLineAngleFromPoint2.Clear();

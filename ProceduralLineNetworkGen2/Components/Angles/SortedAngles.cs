@@ -7,7 +7,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Angles of a line (from the perspective of Point1 and Point2) in the entire line network sorted by 0 to 2pi.  
     /// </summary>
-    public class SortedAngles : LineNetworkObserver
+    public class SortedAngles : ILineNetObserver
     {
         private readonly ILineAngleTracker angleTracker;
         private readonly ElementStorage database;
@@ -25,13 +25,18 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// </summary>
         public readonly IReadOnlyDictionary<float, Tuple<uint, LineEndPoint>> angleToPointKey;
 
+        public ObserverEvent[] eventSubscription => [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear];
+
+        public uint UpdateLevel => ((ILineNetObserver)angleTracker).UpdateLevel + 1;
+
+        public bool Multithread => throw new NotImplementedException();
+
         /// <summary>
         /// Angles of a line (from the perspective of Point1 and Point2) in the entire line network sorted by 0 to 2pi.  
         /// </summary>
         /// <param name="angleTracker">Target angle tracker</param>
         /// <param name="storage">Target element storage</param>
-        public SortedAngles(ILineAngleTracker angleTracker, ElementStorage storage) : 
-        base(((LineNetworkObserver)angleTracker).UpdateLevel + 1, true, [ObserverEvent.PointModified, ObserverEvent.LineAdded, ObserverEvent.LineModified, ObserverEvent.LineRemoved, ObserverEvent.LineClear])
+        public SortedAngles(ILineAngleTracker angleTracker, ElementStorage storage)
         {
             this.angleTracker = angleTracker;
             this.database = storage;
@@ -41,13 +46,13 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
             foreach (uint lineKey in storage.lines.Keys)
             {
-                LineAdded(lineKey, new(0, 0));
+                ((ILineNetObserver)this).LineAdded(lineKey, new(0, 0));
             }
         }
 
         public IReadOnlySet<float> GetViewBetween(float min, float max) => lineAngles.GetViewBetween(min, max);
 
-        protected override void PointModified(uint key, Point before, Point after)
+        void ILineNetObserver.PointModified(uint key, Point before, Point after)
         {
             foreach (uint lineKey in database.linesOnPoint.linesOnPoint[key])
             {
@@ -56,25 +61,25 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             }
         }
 
-        protected override void LineAdded(uint key, Line line)
+        void ILineNetObserver.LineAdded(uint key, Line line)
         {
             lineAngles.Add(angleTracker.fromPoint1[key], new(key, LineEndPoint.Point1));
             lineAngles.Add(angleTracker.fromPoint2[key], new(key, LineEndPoint.Point2));
         }
 
-        protected override void LineModified(uint key, Line before, Line after)
+        void ILineNetObserver.LineModified(uint key, Line before, Line after)
         {
             lineAngles.Modify(new(key, LineEndPoint.Point1), angleTracker.fromPoint1[key]);
             lineAngles.Modify(new(key, LineEndPoint.Point2), angleTracker.fromPoint2[key]);
         }
 
-        protected override void LineRemoved(uint key, Line line)
+        void ILineNetObserver.LineRemoved(uint key, Line line)
         {
             lineAngles.Remove(new(key, LineEndPoint.Point1));
             lineAngles.Remove(new(key, LineEndPoint.Point2));
         }
 
-        protected override void LineClear()
+        void ILineNetObserver.LineClear()
         {
             lineAngles = new();
         }

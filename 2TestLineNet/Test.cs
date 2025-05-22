@@ -50,16 +50,20 @@ namespace _2TestLineNet
             }
         }
 
-        public class Notifier : LineNetworkObserver
+        public class Notifier : ILineNetObserver
         {
-            public Notifier() : base(0, false, [ObserverEvent.LineAdded, ObserverEvent.PointAdded]) { }
+            public ObserverEvent[] eventSubscription => [ObserverEvent.LineAdded, ObserverEvent.PointAdded];
 
-            protected override void LineAdded(uint key, Line newLine)
+            public uint UpdateLevel => 0;
+
+            public bool Multithread => false;
+
+            void ILineNetObserver.LineAdded(uint key, Line newLine)
             {
                 Console.WriteLine("NewLine!");
             }
 
-            protected override void PointAdded(uint key, Point newPoint)
+            void ILineNetObserver.PointAdded(uint key, Point newPoint)
             {
                 Console.WriteLine("NewPoint!");
             }

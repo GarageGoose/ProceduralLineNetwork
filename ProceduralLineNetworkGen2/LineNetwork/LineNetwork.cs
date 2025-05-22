@@ -130,14 +130,14 @@ namespace GarageGoose.ProceduralLineNetwork
         /// An observer observes different specific parts of the line network and create data additional data from.
         /// </summary>
         /// <param name="observer">Observer to add.</param>
-        public void LinkObserver(LineNetworkObserver observer) => Observer.linkedObservers.Add(observer);
+        public void LinkObserver(ILineNetObserver observer) => Observer.linkedObservers.Add(observer);
 
         /// <summary>
         /// Link an observer to the line network.
         /// An observer observes different specific parts of the line network and create data additional data from.
         /// </summary>
         /// <param name="observer">Observer to add.</param>
-        public TObserver LinkObserver<TObserver>(TObserver observer) where TObserver : LineNetworkObserver
+        public TObserver LinkObserver<TObserver>(TObserver observer) where TObserver : ILineNetObserver
         {
             Observer.linkedObservers.Add(observer);
             return observer;
@@ -148,6 +148,6 @@ namespace GarageGoose.ProceduralLineNetwork
         /// An observer observes different specific parts of the line network and create data additional data from.
         /// </summary>
         /// <param name="observer">Observer instance to remove.</param>
-        public void UnlinkObserver(LineNetworkObserver observer) => Observer.linkedObservers.Remove(observer);
+        public void UnlinkObserver(ILineNetObserver observer) => Observer.linkedObservers.Remove(observer);
     }
 }
