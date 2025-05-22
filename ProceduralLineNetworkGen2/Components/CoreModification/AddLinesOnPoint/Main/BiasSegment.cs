@@ -162,33 +162,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             if(cData.Count == 0)
             {
                 internalLineBiases.Insert(currSegmentIndex, Segment);
+                return;
             }
-            else
-            {
-                CollisionFix cFix = collisionAction.CollisionAction(cData);
-
-                if (cFix.addCurrentSegment)
-                {
-                    internalLineBiases.RemoveAt(currSegmentIndex);
-                }
-
-                if (cFix.removeCollidingSegments)
-                {
-                    for (int i = precedingColCount; i > 0; i--)
-                    {
-                        internalLineBiases.RemoveAt(currSegmentIndex - precedingColCount);
-                    }
-                    for (int i = succeedingColCount; i > 0; i--)
-                    {
-                        internalLineBiases.RemoveAt(currSegmentIndex - (cFix.addCurrentSegment ? 0 : 1));
-                    }
-                }
-
-                foreach (BiasSegment bSeg in cFix.newSegments)
-                {
-                    SortedAdd(bSeg);
-                }
-            }
+            FixCollision(cData, collisionAction, precedingColCount, currSegmentIndex, succeedingColCount);
         }
 
         private List<CollisionData> CheckCollision(int currSegmentIndex, BiasSegment current, out int precedingSegmentsCollided, out int succeedingSegmentsCollided)
@@ -224,77 +200,63 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             return collDat;
         }
 
-        public IEnumerable<IBiasSegmentSingle> GetBiasSegments() => internalLineBiases;
-
         /// <summary>
-        /// Check and resolve pre-existing bias segment collisions. This is inefficient at O(n*n)
+        /// Check and resolve pre-existing bias segment collisions at O(n * n at worst case scenario).
         /// </summary>
         /// <param name="collisionAction"></param>
         public void ResolveCollision(IBiasSegmentCollisionAction collisionAction)
         {
+            for(int i = 0; i < internalLineBiases.Count; i++)
+            {
+                List<CollisionData> cData = CheckCollision(i, internalLineBiases[i], out int precedingColCount, out int succeedingColCount);
 
+                if (cData.Count == 0)
+                {
+                    internalLineBiases.Insert(i, internalLineBiases[i]);
+                    return;
+                }
+                FixCollision(cData, collisionAction, precedingColCount, i, succeedingColCount);
+            }
         }
+
+        private void FixCollision(List<CollisionData> cData, IBiasSegmentCollisionAction collisionAction, int precedingColCount, int currSegmentIndex, int succeedingColCount)
+        {
+            CollisionFix cFix = collisionAction.CollisionAction(cData);
+
+            if (cFix.addCurrentSegment)
+            {
+                internalLineBiases.RemoveAt(currSegmentIndex);
+            }
+
+            if (cFix.removeCollidingSegments)
+            {
+                for (int i = precedingColCount; i > 0; i--)
+                {
+                    internalLineBiases.RemoveAt(currSegmentIndex - precedingColCount);
+                }
+                for (int i = succeedingColCount; i > 0; i--)
+                {
+                    internalLineBiases.RemoveAt(currSegmentIndex - (cFix.addCurrentSegment ? 0 : 1));
+                }
+            }
+
+            foreach (BiasSegment bSeg in cFix.newSegments)
+            {
+                SortedAdd(bSeg);
+            }
+        }
+
+        public IEnumerable<IBiasSegmentSingle> GetBiasSegments() => internalLineBiases;
 
         /// <summary>
         /// Remove a segment at index
         /// </summary>
-        public void RemoveAt(int index)
-        {
+        public void RemoveAt(int index) => internalLineBiases.RemoveAt(index);
 
-        }
-        
         /// <summary>
         /// Remove a segment
         /// </summary>
-        public void Remove(BiasSegment segment)
-        {
-
-        }
-
-        /// <summary>
-        /// Adjust segment edge at both direction
-        /// </summary>
-        public void AdjustSegmentEdge(int segmentIndex, float newLeftBounds, float newRightBounds)
-        {
-
-        }
-
-        /// <summary>
-        /// Adjust the left edge of a segment
-        /// </summary>
-        public void AdjustSegmentEdgeLeft(int segmentIndex, float newLeftBounds)
-        {
-
-        }
-
-        /// <summary>
-        /// Adjust the right edge of a segment
-        /// </summary>
-        public void AdjustSegmentEdgeRight(int segmentIndex, float newRightBounds)
-        {
-
-        }
-
-        /// <summary>
-        /// Split a segment
-        /// </summary>
-        /// <param name="splitAt"></param>
-        /// <returns>True if the operation is successful. Otherwise false.</returns>
-        public bool SplitSegment(int segmentIndex, float splitAt)
-        {
-
-        }
-
-        /// <summary>
-        /// Split a segment with a gap
-        /// </summary>
-        /// <param name="splitAt"></param>
-        /// <param name="splitGapBothDirection"></param>
-        /// <returns>True if the operation is successful. Otherwise false.</returns>
-        public bool SplitSegment(int segmentIndex, float splitAt, float splitGapBothDirection)
-        {
-
-        }
+        public void Remove(BiasSegment segment) => internalLineBiases.Remove(segment);
     }
 
     /// <summary>
@@ -330,12 +292,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             {
                 if (locationInSegmentLeft)
                 {
-                    BiasSegmentEndpoint currEndpoint = endpoints[collidingSegmentLeftmost];
-                    bool adjustLeftEndpoint = currEndpoint.left > leftEdge;
-                    bool adjustRightEndpoint = currEndpoint.right < rightEdge;
+                    bool adjustLeftEndpoint = endpoints[collidingSegmentLeftmost].left > leftEdge;
+                    bool adjustRightEndpoint = endpoints[collidingSegmentLeftmost].right < rightEdge;
                     if (adjustLeftEndpoint || adjustRightEndpoint)
                     {
-                        internalEndpoints[collidingSegmentLeftmost] = new(adjustLeftEndpoint ? leftEdge : currEndpoint.left, adjustRightEndpoint ? rightEdge : currEndpoint.right);
+                        internalEndpoints[collidingSegmentLeftmost] = new(adjustLeftEndpoint ? leftEdge : endpoints[collidingSegmentLeftmost].left, adjustRightEndpoint ? rightEdge : endpoints[collidingSegmentLeftmost].right);
                     }
                     return;
                 }
@@ -354,7 +315,68 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         public void RemoveSegment(float leftEdge, float rightEdge)
         {
+            int collidingSegmentLeftmost = BinarySearch(leftEdge, out bool locationInSegmentLeft);
+            int collidingSegmentRightmost = BinarySearch(rightEdge, out bool locationInSegmentRight);
 
+            if (collidingSegmentLeftmost + 1 < collidingSegmentRightmost)
+            {
+                for (int i = collidingSegmentLeftmost + 1; i < collidingSegmentRightmost; i++)
+                {
+                    internalEndpoints.RemoveAt(collidingSegmentLeftmost + 1);
+                }
+            }
+
+            if (collidingSegmentLeftmost == collidingSegmentRightmost)
+            {
+                if (!locationInSegmentLeft)
+                {
+                    return;
+                }
+
+                float collSegLeftLoc = endpoints[collidingSegmentLeftmost].left;
+                float collSegRightLoc = endpoints[collidingSegmentLeftmost].right;
+
+                bool createLeftSeg = collSegLeftLoc < leftEdge;
+                bool createRightSeg = collSegRightLoc > rightEdge;
+
+                if (createLeftSeg)
+                {
+                    internalEndpoints[collidingSegmentLeftmost] = new(collSegLeftLoc, leftEdge);
+
+                    if (createRightSeg)
+                    {
+                        internalEndpoints.Insert(collidingSegmentLeftmost + 1, new(rightEdge, collSegRightLoc));
+                    }
+                }
+                else if (createRightSeg)
+                {
+                    internalEndpoints[collidingSegmentLeftmost] = new(rightEdge, collSegRightLoc);
+                }
+                else
+                {
+                    internalEndpoints.RemoveAt(collidingSegmentLeftmost);
+                }
+            }
+
+            collidingSegmentRightmost = collidingSegmentLeftmost + 1;
+
+            if (endpoints[collidingSegmentLeftmost].left > leftEdge)
+            {
+                internalEndpoints.RemoveAt(collidingSegmentLeftmost);
+            }
+            else
+            {
+                internalEndpoints[collidingSegmentLeftmost] = new(endpoints[collidingSegmentLeftmost].left, leftEdge);
+            }
+
+            if (endpoints[collidingSegmentRightmost].right < rightEdge)
+            {
+                internalEndpoints.RemoveAt(collidingSegmentRightmost);
+            }
+            else
+            {
+                internalEndpoints[collidingSegmentRightmost] = new(rightEdge, internalEndpoints[collidingSegmentRightmost].right);
+            }
         }
    
         public int BinarySearch(float location, out bool locationInSegment)
