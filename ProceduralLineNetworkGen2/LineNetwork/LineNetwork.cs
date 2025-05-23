@@ -1,6 +1,7 @@
 using GarageGoose.ProceduralLineNetwork.Component.Interface;
 using GarageGoose.ProceduralLineNetwork.Manager;
 using GarageGoose.ProceduralLineNetwork.Elements;
+using ProceduralLineNetwork.LineNetwork.Helpers;
 
 namespace GarageGoose.ProceduralLineNetwork
 {
@@ -24,14 +25,18 @@ namespace GarageGoose.ProceduralLineNetwork
         /// </summary>
         public readonly FastKeyGen KeyGenerator;
 
-        public LineNetwork(bool MultithreadObservers, bool MultithreadSearching)
+        /// <summary>
+        /// Aggregator service for classes/components dependency.
+        /// </summary>
+        public readonly LineNetAggregator aggregator;
+
+        public LineNetwork(bool MultithreadObservers)
         {
             Observer = new(MultithreadObservers);
             KeyGenerator = new();
             Storage = new(Observer);
+            aggregator = new(Storage.points, Storage.lines, Storage.linesOnPoint, Observer.linkedObservers);
         }
-
-        //Down below is the shortcuts to commonly used methods for simplicity.
 
         /// <summary>
         /// Add a new line to the line network.

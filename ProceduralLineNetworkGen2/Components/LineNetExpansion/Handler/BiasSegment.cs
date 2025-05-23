@@ -106,6 +106,11 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         public readonly float right;
         public BiasSegmentEndpoint(float left, float right)
         {
+            if(left > right)
+            {
+                right = left;
+                left = right;
+            }
             this.left = left;
             this.right = right;
         }

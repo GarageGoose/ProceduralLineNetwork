@@ -4,14 +4,6 @@ using GarageGoose.ProceduralLineNetwork.Manager;
 namespace GarageGoose.ProceduralLineNetwork.Component.Interface
 {
     /// <summary>
-    /// Interface for the line network modifier components.
-    /// </summary>
-    public abstract class LineNetworkModifier
-    {
-
-    }
-
-    /// <summary>
     /// Interface for observer components.
     /// </summary>
     public interface ILineNetObserver

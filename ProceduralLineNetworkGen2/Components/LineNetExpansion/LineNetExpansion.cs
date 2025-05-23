@@ -5,7 +5,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Expand the line network on the selected point with flexibility using additional components.
     /// </summary>
-    public class AddLinesOnPointMain
+    public class LineNetExpansion
     {
         /// <summary>
         /// Add a new line for each selected points.
@@ -14,7 +14,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <param name="AngularBiasComponents">Components to determine the angular bias.</param>
         /// <param name="LineLengthBiasComponents">Components to determine the line length bias.</param>
         /// <param name="MaxLength">Maximum length of the line</param>
-        public void Modify(IEnumerable<uint> TargetPoints, IBiasSegmentComponent[] AngularBiasComponents, IBiasSegmentComponent[] LineLengthBiasComponents, float MaxLength)
+        public void Modify(IEnumerable<uint> TargetPoints, ILengthBiasComponent[] AngularBiasComponents, ILengthBiasComponent[] LineLengthBiasComponents, float MaxLength)
         {
 
         }
@@ -25,7 +25,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <param name="TargetPoints">Keys of the point where to add lines.</param>
         /// <param name="AngularBiasComponents">Components to determine the angular bias.</param>
         /// <param name="Length">Length of the line</param>
-        public void ModifyPresetAngle(IEnumerable<uint> TargetPoints, IBiasSegmentComponent[] AngularBiasComponents, float Length)
+        public void ModifyPresetAngle(IEnumerable<uint> TargetPoints, ILengthBiasComponent[] AngularBiasComponents, float Length)
         {
 
         }
@@ -36,24 +36,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         /// <param name="TargetPoints">Keys of the point where to add lines.</param>
         /// <param name="LineLengthBiasComponents">Components to determine the line length bias.</param>
         /// <param name="Angle">Angle of the point</param>
-        public void ModifyPresetLength(IEnumerable<uint> TargetPoints, IBiasSegmentComponent[] LineLengthBiasComponents, float Angle)
+        public void ModifyPresetLength(IEnumerable<uint> TargetPoints, ILengthBiasComponent[] LineLengthBiasComponents, float Angle)
         {
 
         }
     }
-
-    /// <summary>
-    /// Interface for <code>AddLinesOnPoint</code> components for line length bias.
-    /// </summary>
-    public interface IBiasSegmentComponent
-    {
-        /// <param name="lineKey">Current point's key</param>
-        /// <param name="angle">Chosen angle</param>
-        /// <returns>Determinedd line length bias</returns>
-        public IBiasSegment GetLineLengthBias(uint lineKey, Line TargetLine, float angle);
-    }
-
-
-
-
 }

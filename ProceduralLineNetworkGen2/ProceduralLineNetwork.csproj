@@ -12,4 +12,12 @@
     <None Remove="ComponentOutputInterfaces\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Components\LineNetExpansion\Handler\Interface.cs~RF57ee7a8e.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\QuadTree\" />
+  </ItemGroup>
+
 </Project>
