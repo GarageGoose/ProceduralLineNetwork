@@ -15,9 +15,17 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             this.lineAngles = lineAngles;
         }
 
-        public IBiasSegmentContainer GetBias(uint pointKey, Point targetPoint, float BiasIn)
+        public IBiasSegmentContainer GetBias(uint pointKey, float biasIn, float angularDistance)
         {
-            BiasSegmentContainerSingleValue segmentContainer = new();
+            BiasSegmentContainerSingleValue segmentContainer = new(biasIn);
+
+            foreach(uint lineKey in lineNet.connectedLinesOnPoint.linesOnPoint[pointKey])
+            {
+                float currentLineAngle = lineNet.lines[lineKey].PointKey1 == pointKey ? lineAngles.fromPoint1[lineKey] : lineAngles.fromPoint2[lineKey];
+                segmentContainer.AddSegment(currentLineAngle - angularDistance, currentLineAngle + angularDistance);
+            }
+
+            return segmentContainer;
         }
     }
 }
