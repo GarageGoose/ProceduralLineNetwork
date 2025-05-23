@@ -6,7 +6,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// </summary>
     public interface IBiasSegmentCollisionAction
     {
-        CollisionFix CollisionAction(List<CollisionData> collisionData);
+        CollisionFix CollisionAction(IBiasSegmentSingle currSegment, List<CollisionData> collisionData);
     }
 
     /// <summary>

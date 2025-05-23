@@ -13,11 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Components\LineNetExpansion\Handler\Interface.cs~RF57ee7a8e.TMP" />
+    <None Remove="Components\LineNetExpansion%28Modifier%29\Handler\Interface.cs~RF57ee7a8e.TMP" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\QuadTree\" />
+    <Folder Include="Components\QuadTree%28TrackerAndModifier%29\" />
   </ItemGroup>
 
 </Project>

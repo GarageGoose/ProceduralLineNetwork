@@ -14,10 +14,10 @@ namespace _2TestLineNet
 
             LineNetwork ln = new(false, false);
 
-            ObserveLineAngles lineAngle = new(ln.Storage);
-            ObserveOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.Storage);
-            ObserveAngleBetweenLines abl = new(lineAngle, ln.Storage, lineOrder);
-            SortedAngles sortedAngles = new(lineAngle, ln.Storage);
+            ObserveLineAngles lineAngle = new(ln.elements);
+            ObserveOrderOfLinesOnPoint lineOrder = new(lineAngle, ln.elements);
+            ObserveAngleBetweenLines abl = new(lineAngle, ln.elements, lineOrder);
+            SortedAngles sortedAngles = new(lineAngle, ln.elements);
 
             Notifier s = new();
 

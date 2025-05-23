@@ -100,6 +100,9 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
         }
     }
 
+    /// <summary>
+    /// Stores the left and right edge of a segment.
+    /// </summary>
     public struct BiasSegmentEndpoint
     {
         public readonly float left;
@@ -119,7 +122,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Hold and handles multiple line length bias segments for <code>LineLengthAngularBias</code>.
     /// </summary>
-    public class BiasSegmentContainer : IBiasSegmentContainer
+    public class BSegContainer : IBiasSegmentContainer
     {
         /// <summary>
         /// Sorted set of line length bias segments
@@ -137,7 +140,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
             return index;
         }
 
-        public BiasSegmentContainer()
+        public BSegContainer()
         {
             lineBiases = internalLineBiases;
         }
@@ -226,7 +229,7 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
 
         private void FixCollision(List<CollisionData> cData, IBiasSegmentCollisionAction collisionAction, int precedingColCount, int currSegmentIndex, int succeedingColCount)
         {
-            CollisionFix cFix = collisionAction.CollisionAction(cData);
+            CollisionFix cFix = collisionAction.CollisionAction(internalLineBiases[currSegmentIndex], cData);
 
             if (cFix.addCurrentSegment)
             {
@@ -267,14 +270,14 @@ namespace GarageGoose.ProceduralLineNetwork.Component.Core
     /// <summary>
     /// Hold and handles multiple line length bias segments with the same bias value. More performant than BiasSegmentContainer
     /// </summary>
-    public class BiasSegmentContainerSingleValue : IBiasSegmentContainer
+    public class BSegContainerSingle : IBiasSegmentContainer
     {
         public IReadOnlyList<BiasSegmentEndpoint> endpoints;
         public float biasValue;
         private static endpointComparerNoCollision endpointComparer = new();
         private List<BiasSegmentEndpoint> internalEndpoints = new();
 
-        public BiasSegmentContainerSingleValue(float biasValue)
+        public BSegContainerSingle(float biasValue)
         {
             endpoints = internalEndpoints;
             this.biasValue = biasValue;
